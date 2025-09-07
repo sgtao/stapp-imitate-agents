@@ -19,6 +19,8 @@ def initial_session_state():
     # セッション状態の初期化
     if "config_list" not in st.session_state:
         st.session_state.config_list = []
+    if "config_file" not in st.session_state:
+        st.session_state.config_file = ""
 
 
 def _update_api_origin():
@@ -52,28 +54,79 @@ def main():
     )
 
     if len(st.session_state.config_list) == 0:
-        if st.button("Check Ready to access API-Server"):
+        if st.button("Check Ready to access API-Server", type="primary"):
             try:
                 uri = request_inputs.make_uri(path="/api/v0/hello")
                 response = api_requestor.send_request(url=uri, method="GET")
-                response_viewer.render_viewer(response)
+                # response_viewer.render_viewer(response)
                 st.success("Success: Access to API Server")
+            except Exception as e:
+                st.error(f"Cannot Access to API Searver: {e}")
+                st.info("Please Run API Server!!")
 
+            try:
                 # Get a list of Config files
                 uri = request_inputs.make_uri(path="/api/v0/configs")
                 response = api_requestor.send_request(url=uri, method="GET")
                 st.session_state.config_list = (
                     response_viewer.extract_response_value(response)
                 )
-
                 # reloase This Screen
                 time.sleep(3)
                 st.rerun()
 
             except Exception as e:
-                st.error(f"Error Access to API Searver: {e}")
-                st.info("Please Run API Server!!")
+                st.warning(f"Not Found Config list: {e}")
+
     else:
+        config_file = st.selectbox(
+            "Select Config file",
+            st.session_state.config_list,
+        )
+
+        if config_file != "":
+            # Get a list of Config files
+            uri = request_inputs.make_uri(path="/api/v0/config-title")
+            method = "POST"
+            header_dict = {"Content-Type": "application/json"}
+            # リクエストボディ入力（POST, PUTの場合のみ表示）
+            # request_body = """
+            #     {
+            #         "config_file": "assets/001_get_simple_api_test.yaml"
+            #     }
+            # """
+            request_body = {
+                "config_file": config_file
+            }
+            try:
+                response = api_requestor.send_request(
+                    uri,
+                    method,
+                    header_dict,
+                    request_body,
+                )
+                response.raise_for_status()  # HTTPエラーをチェック
+
+                title = response_viewer.extract_response_value(
+                    response, "results.title"
+                )
+                note = response_viewer.extract_response_value(
+                    response, "results.note"
+                )
+                st.info(
+                    f"""
+                        - Title: {title}
+                        - Note: {note}
+                        """
+                )
+            except Exception as e:
+                st.warning(f"Cannot find Title or Note in config_file: {e}")
+
+        if st.button("Load Config", type="primary"):
+            st.session_state.config_file = config_file
+        st.write(f"used config file: {st.session_state.config_file}")
+
+
         # ユーザー入力：APIリクエストの指定項目
         method = request_inputs.render_method_selector()
         use_dynamic_inputs = request_inputs.render_use_dynamic_checkbox()
