@@ -20,9 +20,7 @@ def main():
     st.title(f"🧪 {APP_TITLE}")
     # インスタンス化
     request_header = ApiRequestHeader()
-    request_inputs = ApiRequestInputs(
-        method="GET", uri="http://localhost:3000/api/v0/configs"
-    )
+    request_inputs = ApiRequestInputs(api_origin="http://localhost:3000")
     response_viewer = ResponseViewer()
     api_requestor = ApiRequestor()
 
