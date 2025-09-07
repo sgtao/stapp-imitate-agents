@@ -1,10 +1,9 @@
 # config_api_client.py
-import json
+# import json
 import time
 
 import streamlit as st
 
-from components.ApiRequestHeader import ApiRequestHeader
 from components.ApiRequestInputs import ApiRequestInputs
 from components.ResponseViewer import ResponseViewer
 from components.SideMenus import SideMenus
@@ -34,12 +33,60 @@ def _update_api_origin():
     st.rerun()
 
 
+def post_api_server(uri, config_file=""):
+    """
+    APIサーバーへconfig_fileのPOSTリクエストを発行します
+    """
+    api_requestor = ApiRequestor()
+    method = "POST"
+    header_dict = {"Content-Type": "application/json"}
+    # リクエストボディ入力（POST, PUTの場合のみ表示）
+    # request_body = """
+    #     {
+    #         "config_file": "assets/001_get_simple_api_test.yaml"
+    #     }
+    # """
+    if config_file == "":
+        raise "Please set Config file"
+
+    request_body = {
+        "config_file": config_file,
+        "num_user_inputs": st.session_state.num_inputs,
+        "user_inputs": {},
+    }
+    for i in range(st.session_state.num_inputs):
+        user_key = f"user_input_{i}"
+        if user_key in st.session_state:
+            value = st.session_state[user_key]
+            request_body["user_inputs"][user_key] = value
+        else:
+            st.warning(f"Session state key '{user_key}' not found.")
+    body_json = request_body
+
+    try:
+        response = api_requestor.send_request(
+            uri,
+            method,
+            header_dict,
+            body_json,
+        )
+        response.raise_for_status()  # HTTPエラーをチェック
+        st.success(
+            """
+            Successfully connected to API Server.
+            """
+        )
+        return response
+    except Exception as e:
+        # st.error(f"Failed to `POST` to API Server: {e}")
+        raise e
+
+
 def main():
     st.page_link("main.py", label="Back to Home", icon="🏠")
 
     st.title(f"🧪 {APP_TITLE}")
     # インスタンス化
-    request_header = ApiRequestHeader()
     request_inputs = ApiRequestInputs(api_origin="http://localhost:3000")
     response_viewer = ResponseViewer()
     api_requestor = ApiRequestor()
@@ -95,9 +142,7 @@ def main():
             #         "config_file": "assets/001_get_simple_api_test.yaml"
             #     }
             # """
-            request_body = {
-                "config_file": config_file
-            }
+            request_body = {"config_file": config_file}
             try:
                 response = api_requestor.send_request(
                     uri,
@@ -126,60 +171,29 @@ def main():
             st.session_state.config_file = config_file
         st.write(f"used config file: {st.session_state.config_file}")
 
-
-        # ユーザー入力：APIリクエストの指定項目
-        method = request_inputs.render_method_selector()
-        use_dynamic_inputs = request_inputs.render_use_dynamic_checkbox()
-        uri = request_inputs.render_uri_input()
-
-        # ヘッダー入力セクション
-        header_dict = {}
-        with st.expander("リクエストヘッダー設定"):
-            request_header.render_editor()
-            # ヘッダー情報を辞書形式で取得
-            header_dict = request_header.get_header_dict()
-
-        # リクエストボディ入力（POST, PUTの場合のみ表示）
-        request_body = request_inputs.render_body_input()
-
         # リクエスト送信ボタン
-        if st.button("リクエストを送信"):
-            try:
-                # 確定情報のセット
-                st.session_state.uri = uri
-                st.session_state.method = method
-                st.session_state.req_body = request_body
-                st.session_state.use_dynamic_inputs = use_dynamic_inputs
+        if st.session_state.config_file != "":
+            api_response = None
+            if st.button("リクエストを送信", type="secondary"):
+                try:
+                    # APIリクエスト送信
+                    uri = request_inputs.make_uri(path="/api/v0/service")
+                    api_response = post_api_server(
+                        uri, st.session_state.config_file
+                    )
 
-                # URIとリクエストボディのJSON形式検証
-                sent_uri = uri
-                sent_body = request_body
-                if st.session_state.use_dynamic_inputs:
-                    sent_uri = api_requestor.replace_uri(st.session_state, uri)
-                    if request_body:
-                        sent_body = api_requestor.replace_body(
-                            st.session_state, request_body
-                        )
+                except Exception as e:
+                    # ユーザー向けメッセージ
+                    st.error(
+                        "リクエスト中にエラー発生。詳細は以下をご確認ください。"
+                    )
+                    # 詳細な例外情報を表示
+                    st.exception(e)
 
-                # st.text(sent_body)
-                body_json = json.loads(sent_body) if request_body else None
-
-                # APIリクエスト送信
-                response = api_requestor.send_request(
-                    sent_uri, method, header_dict, body_json
-                )
-
-                # レスポンス表示
-                if response:
-                    st.subheader("レスポンス")
-                    response_viewer.render_viewer(response)
-            except Exception as e:
-                # ユーザー向けメッセージ
-                st.error(
-                    "リクエスト中にエラーが発生しました。詳細は以下をご確認ください。"
-                )
-                # 詳細な例外情報を表示
-                st.exception(e)
+            # レスポンス表示
+            if api_response:
+                st.subheader("API レスポンス")
+                response_viewer.render_viewer(api_response)
 
 
 if __name__ == "__main__":
