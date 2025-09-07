@@ -5,15 +5,25 @@ METHODS = ["GET", "POST", "PUT", "DELETE"]
 
 
 class ApiRequestInputs:
-    def __init__(self):
+    def __init__(self, method=None, uri=None, body=None):
         # Method, URI, RequestBodyの初期化
         if "method" not in st.session_state:
             # st.session_state.method = "GET"
-            st.session_state.method = METHODS[0]
+            if method is not None:
+                st.session_state.method = method
+            else:
+                st.session_state.method = METHODS[0]
         if "uri" not in st.session_state:
-            st.session_state.uri = "https://dummyjson.com/products/1"
+            if uri is not None:
+                st.session_state.uri = uri
+            else:
+                st.session_state.uri = "https://dummyjson.com/products/1"
         if "req_body" not in st.session_state:
             st.session_state.req_body = "{}"
+            if body is not None:
+                st.session_state.uri = body
+            else:
+                st.session_state.req_body = "{}"
         if "use_dynamic_inputs" not in st.session_state:
             # st.session_state.use_dynamic_inputs = False
             st.session_state.use_dynamic_inputs = True

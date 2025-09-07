@@ -3,16 +3,17 @@ import streamlit as st
 
 
 class UserInputs:
-    def __init__(self):
-        if "user_property_path" not in st.session_state:
-            st.session_state.user_property_path = ""
-
+    def __init__(self, user_property_path=None):
         self.user_property_path = ""
         # プリセット確認
         if "user_property_path" in st.session_state:
             self.user_property_path = st.session_state.user_property_path
         else:
-            self.user_property_path = ""
+            if user_property_path is not None:
+                self.user_property_path = user_property_path
+                st.session_state.user_property_path = user_property_path
+            else:
+                self.user_property_path = ""
 
     def render_property_path(self):
         # レスポンスの抽出プロパティパス指定

@@ -1,4 +1,4 @@
-# 11_trial_simple_api.py
+# config_api_client.py
 import json
 
 import streamlit as st
@@ -11,7 +11,7 @@ from functions.ApiRequestor import ApiRequestor
 from functions.AppLogger import AppLogger
 
 # APP_TITLE = "APIクライアントアプリ"
-APP_TITLE = "Simple Api Client"
+APP_TITLE = "Config Api Client"
 
 
 def main():
@@ -20,7 +20,9 @@ def main():
     st.title(f"🧪 {APP_TITLE}")
     # インスタンス化
     request_header = ApiRequestHeader()
-    request_inputs = ApiRequestInputs()
+    request_inputs = ApiRequestInputs(
+        method="GET", uri="http://localhost:3000/api/v0/configs"
+    )
     response_viewer = ResponseViewer()
     api_requestor = ApiRequestor()
 

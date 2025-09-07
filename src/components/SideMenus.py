@@ -11,7 +11,7 @@ class SideMenus:
         # インスタンス化
         self.api_key_component = ApiKey()
         self.client_controller = ClientController()
-        self.user_inputs_component = UserInputs()
+        self.user_inputs_component = UserInputs(user_property_path="result")
 
     def render_api_client_menu(self):
         with st.sidebar:
