@@ -36,9 +36,6 @@ class ApiRequestInputs:
     def _update_method(self):
         st.session_state.method = st.session_state._method_selector
 
-    def _update_api_origin(self):
-        st.session_state.api_origin = st.session_state._api_origin_input
-
     def _update_uri(self):
         st.session_state.uri = st.session_state._uri_input
 
@@ -81,14 +78,6 @@ class ApiRequestInputs:
             index=METHODS.index(st.session_state.method),
             key="_method_selector",
             on_change=self._update_method,
-        )
-
-    def render_api_origin_input(self):
-        return st.text_input(
-            label="API Server Origin",
-            key="_api_origin_input",
-            value=st.session_state.api_origin,
-            on_change=self._update_api_origin,
         )
 
     def render_uri_input(self):

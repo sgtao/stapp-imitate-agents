@@ -27,6 +27,22 @@ class ResponseViewer:
         else:
             return "unsupported"
 
+    def extract_response_value(self, response):
+        try:
+            content_type = self.response_content(response)
+            # 抽出したいプロパティの指定
+            property_path = st.session_state.user_property_path
+
+            if content_type == "application/json":
+                response_json = response.json()  # JSON形式の場合
+                return self.response_op.extract_property_from_json(
+                    response_json, property_path
+                )
+            else:
+                return response.text
+        except Exception as e:
+            raise e
+
     def header_viewer(self, response):
         with st.expander("レスポンスヘッダー"):
             try:
@@ -91,20 +107,8 @@ class ResponseViewer:
             self.body_viewer(content_type, response)
 
             if st.session_state.user_property_path != "":
-                # 抽出したいプロパティの指定
                 property_path = st.session_state.user_property_path
-
-                if content_type == "application/json":
-                    response_json = response.json()  # JSON形式の場合
-                    extracted_value = (
-                        self.response_op.extract_property_from_json(
-                            response_json, property_path
-                        )
-                    )
-                else:
-                    # extracted_value = response.body
-                    extracted_value = response.text
-
+                extracted_value = self.extract_response_value(response)
                 # 抽出された値を表示
                 if extracted_value is not None:
                     st.success(f"Extracted Value({property_path}): Found.")
@@ -112,8 +116,16 @@ class ResponseViewer:
                     self.render_extracted_value(extracted_value)
                 else:
                     st.warning(f"Extracted Value({property_path}): Not Found!")
+            else:
+                if content_type == "application/json":
+                    self.render_extracted_value(response.json())
+                else:
+                    # Text / HTML の場合
+                    st.markdown(response.text)
 
         except json.JSONDecodeError:
             st.text(response.text)  # テキスト形式の場合
         except TypeError:
             st.error("プロパティの型が想定と異なります。")
+        except Exception as e:
+            st.error(f"Error occurs: {e}")
