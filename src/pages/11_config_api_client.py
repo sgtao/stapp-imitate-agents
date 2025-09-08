@@ -115,9 +115,11 @@ def main():
                 # Get a list of Config files
                 uri = request_inputs.make_uri(path="/api/v0/configs")
                 response = api_requestor.send_request(url=uri, method="GET")
-                st.session_state.config_list = (
-                    response_viewer.extract_response_value(response)
+                # st.session_state.config_list = (
+                _config_list = response_viewer.extract_response_value(
+                    response=response, path="results"
                 )
+                st.session_state.config_list = _config_list
                 # reloase This Screen
                 time.sleep(3)
                 st.rerun()
@@ -153,10 +155,10 @@ def main():
                 response.raise_for_status()  # HTTPエラーをチェック
 
                 title = response_viewer.extract_response_value(
-                    response, "results.title"
+                    response=response, path="results.title"
                 )
                 note = response_viewer.extract_response_value(
-                    response, "results.note"
+                    response=response, path="results.note"
                 )
                 st.info(
                     f"""
@@ -174,7 +176,7 @@ def main():
         # リクエスト送信ボタン
         if st.session_state.config_file != "":
             api_response = None
-            if st.button("リクエストを送信", type="secondary"):
+            if st.button("Request service", type="secondary"):
                 try:
                     # APIリクエスト送信
                     uri = request_inputs.make_uri(path="/api/v0/service")
