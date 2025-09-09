@@ -33,7 +33,7 @@ def _update_api_origin():
     st.rerun()
 
 
-def post_api_server(uri, config_file=""):
+def post_api_server(uri, config_file="", messages=[]):
     """
     APIサーバーへconfig_fileのPOSTリクエストを発行します
     """
@@ -53,6 +53,7 @@ def post_api_server(uri, config_file=""):
         "config_file": config_file,
         "num_user_inputs": st.session_state.num_inputs,
         "user_inputs": {},
+        "messages": messages,
     }
     for i in range(st.session_state.num_inputs):
         user_key = f"user_input_{i}"
@@ -176,21 +177,46 @@ def main():
         # リクエスト送信ボタン
         if st.session_state.config_file != "":
             api_response = None
-            if st.button("Request service", type="secondary"):
-                try:
-                    # APIリクエスト送信
-                    uri = request_inputs.make_uri(path="/api/v0/service")
-                    api_response = post_api_server(
-                        uri, st.session_state.config_file
-                    )
+            messages = []
+            user_message = st.text_input(
+                label="User Message",
+                placeholder="Please input message , when request message",
+            )
+            col1, col2, col3 = st.columns(3)
+            try:
+                with col1:
+                    if st.button(
+                        "Request service", type="secondary", icon="🚀"
+                    ):
+                        # APIリクエスト送信
+                        uri = request_inputs.make_uri(path="/api/v0/service")
+                        api_response = post_api_server(
+                            uri, st.session_state.config_file
+                        )
+                with col2:
+                    if st.button("Request message", type="secondary", icon="🎟️"):
+                        # APIリクエスト送信
+                        if user_message != "":
+                            messages.append(
+                                {"role": "user", "content": user_message}
+                            )
+                        uri = request_inputs.make_uri(path="/api/v0/messages")
+                        api_response = post_api_server(
+                            uri,
+                            st.session_state.config_file,
+                            messages,
+                        )
+                with col3:
+                    if st.button("Rerun (`R`)", icon="🏃"):
+                        st.rerun()
 
-                except Exception as e:
-                    # ユーザー向けメッセージ
-                    st.error(
-                        "リクエスト中にエラー発生。詳細は以下をご確認ください。"
-                    )
-                    # 詳細な例外情報を表示
-                    st.exception(e)
+            except Exception as e:
+                # ユーザー向けメッセージ
+                st.error(
+                    "リクエスト中にエラー発生。詳細は以下をご確認ください。"
+                )
+                # 詳細な例外情報を表示
+                st.exception(e)
 
             # レスポンス表示
             if api_response:
