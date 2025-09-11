@@ -17,10 +17,10 @@ class ClientController:
     def modal(self, type):
         st.write(f"Modal for {type}:")
         if type == "save_state":
-            self.save_session_state()
+            self.save_action_state()
             self._modal_closer()
         elif type == "load_state":
-            self.load_session_state()
+            self.load_action_state()
             self._modal_closer()
         else:
             st.write("No Definition.")
@@ -55,7 +55,7 @@ class ClientController:
 
         return dict_list
 
-    def save_session_state(self):
+    def save_action_state(self):
         with st.expander("Save Session State ?", expanded=False):
             pad = "stappApiClientState.yaml"
             time_stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -63,37 +63,36 @@ class ClientController:
                 f"{datetime.now().strftime('%Y%m%d-%H%M%S')}_{pad}"
             )
             pad = "stappApiClientMessages.yaml"
-            file_name_msgs = (
-                f"{datetime.now().strftime('%Y%m%d-%H%M%S')}_{pad}"
-            )
-            # セッション状態からパラメータを取得
-            conf_data = {
-                "time_stamp": time_stamp,
-                "session_state": {
-                    "method": st.session_state.method,
-                    "uri": st.session_state.uri,
-                    # "header_df": st.session_state.header_df,
-                    "header_df": self._header_df_to_dict(
-                        st.session_state.header_df
-                    ),
-                    "req_body": st.session_state.req_body,
-                    "use_dynamic_inputs": st.session_state.use_dynamic_inputs,
-                    "user_property_path": st.session_state.user_property_path,
-                },
+
+            # --- 保存データを構築 ---
+            _action_state = []
+            _action_item = {
+                "uri": st.session_state.get("uri", ""),
+                # "method": st.session_state.get("method", ""),
+                "method": "POST",
+                "config_file": st.session_state["config_file"],
+                "use_dynamic_inputs": st.session_state.get(
+                    "use_dynamic_inputs", True
+                ),
+                "user_property_path": st.session_state.get(
+                    "user_property_path", ""
+                ),
+                "num_inputs": st.session_state.get("num_inputs", 0),
             }
-            messages = []
-            if "messages" in st.session_state:
-                if len(st.session_state.messages) > 0:
-                    messages = st.session_state.messages.copy()
+            for i in range(_action_item["num_inputs"]):
+                _action_item[f"user_input_{i}"] = st.session_state.get(
+                    f"user_input_{i}", ""
+                )
+            _action_state.append(_action_item)
+            conf_data = {
+                "title": file_name_conf,
+                "action_state": _action_state,
+                "time_stamp": time_stamp,
+            }
 
             # YAMLに変換
             conf_yaml = yaml.dump(
                 conf_data, allow_unicode=True, default_flow_style=False
-            )
-            msgs_yaml = yaml.dump(
-                data={"time_stamp": time_stamp, "messages": messages},
-                allow_unicode=True,
-                default_flow_style=False,
             )
 
             # ダウンロードボタンを表示
@@ -103,13 +102,6 @@ class ClientController:
                 file_name=file_name_conf,
                 mime="text/yaml",
             )
-            if len(messages) > 0:
-                st.download_button(
-                    label="Download Messages",
-                    data=msgs_yaml,
-                    file_name=file_name_msgs,
-                    mime="text/yaml",
-                )
 
     # 『読込み』モーダル：
     def _on_file_upload(self):
@@ -139,26 +131,26 @@ class ClientController:
             st.error(f"設定ファイルの処理に失敗しました: {str(e)}")
             return {}
 
-    def set_session_state(self, config):
+    def set_action_state(self, config):
         if "session_state" not in config:
             return
 
-        cfg_session_state = config.get("session_state", {})
+        cfg_action_state = config.get("session_state", {})
         # "method": st.session_state.method,
         # "uri": st.session_state.uri,
         # "header_df": st.session_state.header_df,
         # "req_body": st.session_state.req_body,
         # "use_dynamic_inputs": st.session_state.use_dynamic_inputs,
         # "user_property_path": st.session_state.user_property_path,
-        if "method" in cfg_session_state:
-            st.session_state.method = cfg_session_state.get("method")
-        if "uri" in cfg_session_state:
-            st.session_state.uri = cfg_session_state.get("uri")
-        # if "header_df" in cfg_session_state:
-        #     st.session_state.uri = cfg_session_state.get("header_df")
+        if "method" in cfg_action_state:
+            st.session_state.method = cfg_action_state.get("method")
+        if "uri" in cfg_action_state:
+            st.session_state.uri = cfg_action_state.get("uri")
+        # if "header_df" in cfg_action_state:
+        #     st.session_state.uri = cfg_action_state.get("header_df")
 
-        if "header_df" in cfg_session_state:
-            get_header = cfg_session_state.get("header_df")
+        if "header_df" in cfg_action_state:
+            get_header = cfg_action_state.get("header_df")
             header_list = []
             for header_item in get_header:
                 auth_value = header_item["Value"].replace(
@@ -173,9 +165,9 @@ class ClientController:
             header_df = pd.DataFrame(header_list)
             st.session_state.header_df = header_df
 
-        if "req_body" in cfg_session_state:
+        if "req_body" in cfg_action_state:
             # st.session_state.req_body = _req_body
-            _req_body = cfg_session_state.get("req_body")
+            _req_body = cfg_action_state.get("req_body")
             # print(f"req_body type: {type(_req_body)}")
             if type(_req_body) is str:
                 # 文字列の場合はそのまま使用
@@ -188,17 +180,17 @@ class ClientController:
                 st.session_state.req_body = json.dumps(
                     _req_body, ensure_ascii=False, indent=4
                 )
-        if "use_dynamic_inputs" in cfg_session_state:
-            if cfg_session_state.get("use_dynamic_inputs") == "false":
+        if "use_dynamic_inputs" in cfg_action_state:
+            if cfg_action_state.get("use_dynamic_inputs") == "false":
                 st.session_state.use_dynamic_inputs = False
             else:
                 st.session_state.use_dynamic_inputs = True
-        if "user_property_path" in cfg_session_state:
-            st.session_state.user_property_path = cfg_session_state.get(
+        if "user_property_path" in cfg_action_state:
+            st.session_state.user_property_path = cfg_action_state.get(
                 "user_property_path"
             )
 
-    def load_session_state(self):
+    def load_action_state(self):
 
         uploaded_file = st.file_uploader(
             label="Choose a YAML config file",
@@ -212,7 +204,7 @@ class ClientController:
                 config = self._load_config(uploaded_file)
                 if config:
                     # st.session_state.config = config
-                    self.set_session_state(config)
+                    self.set_action_state(config)
                     # main_viewer.config_viewer(st.session_state.config)
                     st.rerun()
             except yaml.YAMLError as e:
@@ -247,18 +239,13 @@ class ClientController:
                 self.modal("save_state")
         with col3:
             if st.button(
-                help="Load Session States",
-                label="📤",
-                disabled=st.session_state.api_running,
-            ):
-                self.modal("load_state")
-        with col4:
-            if st.button(
                 help="Clear Session States",
                 label="🔄",
             ):
                 # 全てのセッション状態をクリアする場合はこちらを使用
                 st.session_state.clear()
                 st.rerun()
+        with col4:
+            pass
         with col5:
             pass

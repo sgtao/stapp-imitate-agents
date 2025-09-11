@@ -194,7 +194,9 @@ def main():
                             uri, st.session_state.config_file
                         )
                 with col2:
-                    if st.button("Request message", type="secondary", icon="🎟️"):
+                    if st.button(
+                        "Request message", type="secondary", icon="🎟️"
+                    ):
                         # APIリクエスト送信
                         if user_message != "":
                             messages.append(
