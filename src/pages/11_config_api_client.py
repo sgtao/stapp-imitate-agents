@@ -36,50 +36,31 @@ def _update_api_origin():
 def post_api_server(uri, config_file="", messages=[]):
     """
     APIサーバーへconfig_fileのPOSTリクエストを発行します
+    - 内部は、ApiRequestor.send_api_request を呼び出すラッパー
     """
-    api_requestor = ApiRequestor()
-    method = "POST"
-    header_dict = {"Content-Type": "application/json"}
-    # リクエストボディ入力（POST, PUTの場合のみ表示）
-    # request_body = """
-    #     {
-    #         "config_file": "assets/001_get_simple_api_test.yaml"
-    #     }
-    # """
-    if config_file == "":
-        raise "Please set Config file"
+    num_inputs = st.session_state.get("num_inputs", 0)
+    user_inputs = {}
 
-    request_body = {
-        "config_file": config_file,
-        "num_user_inputs": st.session_state.num_inputs,
-        "user_inputs": {},
-        "messages": messages,
-    }
-    for i in range(st.session_state.num_inputs):
+    for i in range(num_inputs):
         user_key = f"user_input_{i}"
         if user_key in st.session_state:
-            value = st.session_state[user_key]
-            request_body["user_inputs"][user_key] = value
+            user_inputs[user_key] = st.session_state[user_key]
         else:
             st.warning(f"Session state key '{user_key}' not found.")
-    body_json = request_body
 
     try:
-        response = api_requestor.send_request(
-            uri,
-            method,
-            header_dict,
-            body_json,
+        api_requestor = ApiRequestor()
+        response = api_requestor.send_api_request(
+            uri=uri,
+            method="POST",
+            config_file=config_file,
+            num_inputs=num_inputs,
+            user_inputs=user_inputs,
+            messages=messages,
         )
-        response.raise_for_status()  # HTTPエラーをチェック
-        st.success(
-            """
-            Successfully connected to API Server.
-            """
-        )
+        st.success("Successfully connected to API Server.")
         return response
     except Exception as e:
-        # st.error(f"Failed to `POST` to API Server: {e}")
         raise e
 
 
@@ -93,7 +74,6 @@ def main():
     api_requestor = ApiRequestor()
 
     # Setup to access API-Server
-    # request_inputs.render_api_origin_input()
     st.text_input(
         label="API Server Origin",
         key="_api_origin_input",
