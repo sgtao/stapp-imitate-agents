@@ -77,98 +77,23 @@ def main():
     # api_requestor = ApiRequestor()
     config_api_selector = ConfigApiSelector()
 
-    # # Setup to access API-Server
-    # st.text_input(
-    #     label="API Server Origin",
-    #     key="_api_origin_input",
-    #     value=st.session_state.api_origin,
-    #     on_change=_update_api_origin,
-    # )
-
-    # if len(st.session_state.config_list) == 0:
-    #     if st.button("Check Ready to access API-Server", type="primary"):
-    #         try:
-    #             uri = request_inputs.make_uri(path="/api/v0/hello")
-    #             response = api_requestor.send_request(url=uri, method="GET")
-    #             # response_viewer.render_viewer(response)
-    #             st.success("Success: Access to API Server")
-    #         except Exception as e:
-    #             st.error(f"Cannot Access to API Searver: {e}")
-    #             st.info("Please Run API Server!!")
-
-    #         try:
-    #             # Get a list of Config files
-    #             uri = request_inputs.make_uri(path="/api/v0/configs")
-    #             response = api_requestor.send_request(url=uri, method="GET")
-    #             # st.session_state.config_list = (
-    #             _config_list = response_viewer.extract_response_value(
-    #                 response=response, path="results"
-    #             )
-    #             st.session_state.config_list = _config_list
-    #             # reloase This Screen
-    #             time.sleep(3)
-    #             st.rerun()
-
-    #         except Exception as e:
-    #             st.warning(f"Not Found Config list: {e}")
-
-    # else:
-    #     config_file = st.selectbox(
-    #         "Select Config file",
-    #         st.session_state.config_list,
-    #     )
-
     try:
+        # Setup to access API-Server
         config_file = config_api_selector.render_selector()
 
         if config_file == "":
             st.warning("Please check to access API Server!")
             return
         else:
-            #     # Get a list of Config files
-            #     uri = request_inputs.make_uri(path="/api/v0/config-title")
-            #     method = "POST"
-            #     header_dict = {"Content-Type": "application/json"}
-            #     # リクエストボディ入力（POST, PUTの場合のみ表示）
-            #     # request_body = """
-            #     # {
-            #     #    "config_file": "assets/001_get_simple_api_test.yaml"
-            #     # }
-            #     # """
-            #     request_body = {"config_file": config_file}
-            #     try:
-            #         response = api_requestor.send_request(
-            #             uri,
-            #             method,
-            #             header_dict,
-            #             request_body,
-            #         )
-            #         response.raise_for_status()  # HTTPエラーをチェック
-
-            #         title = response_viewer.extract_response_value(
-            #             response=response, path="results.title"
-            #         )
-            #         note = response_viewer.extract_response_value(
-            #             response=response, path="results.note"
-            #         )
-            #         st.info(
-            #             f"""
-            #                 - Title: {title}\n
-            #                 - Note: {note}
-            #                 """
-            #         )
-            #     except Exception as e:
-            #         st.warning(
-            #             f"Cannot find Title or Note in config_file: {e}"
-            #         )
+            # Render selected config tilte and note
             config_api_selector.render_config_title(config_file)
 
-            if st.button("Load Config", type="primary"):
+            if st.button("Set Config", type="primary"):
                 st.session_state.config_file = config_file
-            st.write(f"used config file: {st.session_state.config_file}")
 
         # リクエスト送信ボタン
         if st.session_state.config_file != "":
+            st.write(f"used config file: {st.session_state.config_file}")
             api_response = None
             messages = []
             user_message = st.text_input(
