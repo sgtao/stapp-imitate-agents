@@ -61,6 +61,9 @@ def post_api_server(uri, config_file="", messages=[]):
             user_inputs=user_inputs,
             messages=messages,
         )
+        # if success, set parameters to session_state for save YAML
+        st.session_state.uri = uri
+        st.session_state.metohd = "POST"
         st.success("Successfully connected to API Server.")
         return response
     except Exception as e:
