@@ -2,11 +2,13 @@
 # import json
 import streamlit as st
 
+from components.ApiClient import ApiClient
 from components.ApiRequestInputs import ApiRequestInputs
 from components.ConfigApiSelector import ConfigApiSelector
 from components.ResponseViewer import ResponseViewer
 from components.SideMenus import SideMenus
-from functions.ApiRequestor import ApiRequestor
+
+# from functions.ApiRequestor import ApiRequestor
 from functions.AppLogger import AppLogger
 
 # APP_TITLE = "APIクライアントアプリ"
@@ -15,52 +17,52 @@ APP_TITLE = "Config Api Client"
 
 def initial_session_state():
     # セッション状態の初期化
-    if "api_origin" not in st.session_state:
-        st.session_state.api_origin = "http://localhost:3000"
-    if "config_list" not in st.session_state:
-        st.session_state.config_list = []
+    # if "api_origin" not in st.session_state:
+    #     st.session_state.api_origin = "http://localhost:3000"
+    # if "config_list" not in st.session_state:
+    #     st.session_state.config_list = []
     if "config_file" not in st.session_state:
         st.session_state.config_file = ""
     if "api_response" not in st.session_state:
         st.session_state.api_response = None
-    if "action_resps" not in st.session_state:
-        st.session_state.action_resps = []
-    if "num_resps" not in st.session_state:
-        st.session_state.num_resps = len(st.session_state.action_resps)
+    # if "action_resps" not in st.session_state:
+    #     st.session_state.action_resps = []
+    # if "num_resps" not in st.session_state:
+    #     st.session_state.num_resps = len(st.session_state.action_resps)
 
 
-def post_api_server(uri, config_file="", messages=[]):
-    """
-    APIサーバーへconfig_fileのPOSTリクエストを発行します
-    - 内部は、ApiRequestor.send_api_request を呼び出すラッパー
-    """
-    num_inputs = st.session_state.get("num_inputs", 0)
-    user_inputs = {}
+# def post_api_server(uri, config_file="", messages=[]):
+#     """
+#     APIサーバーへconfig_fileのPOSTリクエストを発行します
+#     - 内部は、ApiRequestor.send_api_request を呼び出すラッパー
+#     """
+#     num_inputs = st.session_state.get("num_inputs", 0)
+#     user_inputs = {}
 
-    for i in range(num_inputs):
-        user_key = f"user_input_{i}"
-        if user_key in st.session_state:
-            user_inputs[user_key] = st.session_state[user_key]
-        else:
-            st.warning(f"Session state key '{user_key}' not found.")
+#     for i in range(num_inputs):
+#         user_key = f"user_input_{i}"
+#         if user_key in st.session_state:
+#             user_inputs[user_key] = st.session_state[user_key]
+#         else:
+#             st.warning(f"Session state key '{user_key}' not found.")
 
-    try:
-        api_requestor = ApiRequestor()
-        response = api_requestor.send_api_request(
-            uri=uri,
-            method="POST",
-            config_file=config_file,
-            num_inputs=num_inputs,
-            user_inputs=user_inputs,
-            messages=messages,
-        )
-        # if success, set parameters to session_state for save YAML
-        st.session_state.uri = uri
-        st.session_state.metohd = "POST"
-        st.success("Successfully connected to API Server.")
-        return response
-    except Exception as e:
-        raise e
+#     try:
+#         api_requestor = ApiRequestor()
+#         response = api_requestor.send_api_request(
+#             uri=uri,
+#             method="POST",
+#             config_file=config_file,
+#             num_inputs=num_inputs,
+#             user_inputs=user_inputs,
+#             messages=messages,
+#         )
+#         # if success, set parameters to session_state for save YAML
+#         st.session_state.uri = uri
+#         st.session_state.metohd = "POST"
+#         st.success("Successfully connected to API Server.")
+#         return response
+#     except Exception as e:
+#         raise e
 
 
 def main():
@@ -72,6 +74,7 @@ def main():
     response_viewer = ResponseViewer()
     # api_requestor = ApiRequestor()
     config_api_selector = ConfigApiSelector()
+    api_client = ApiClient()
 
     try:
         # Setup to access API-Server
@@ -104,7 +107,7 @@ def main():
                     ):
                         # APIリクエスト送信
                         uri = request_inputs.make_uri(path="/api/v0/service")
-                        api_response = post_api_server(
+                        api_response = api_client.post_api_server(
                             uri, st.session_state.config_file
                         )
                 with col2:
@@ -117,7 +120,7 @@ def main():
                                 {"role": "user", "content": user_message}
                             )
                         uri = request_inputs.make_uri(path="/api/v0/messages")
-                        api_response = post_api_server(
+                        api_response = api_client.post_api_server(
                             uri,
                             st.session_state.config_file,
                             messages,

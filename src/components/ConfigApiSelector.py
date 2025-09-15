@@ -9,7 +9,7 @@ from functions.ApiRequestor import ApiRequestor
 
 
 class ConfigApiSelector:
-    def initial_session_state(self):
+    def __init__(self):
         # セッション状態の初期化
         if "api_origin" not in st.session_state:
             st.session_state.api_origin = "http://localhost:3000"
