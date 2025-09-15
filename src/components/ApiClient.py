@@ -54,6 +54,15 @@ class ApiClient:
     def get_api_response(self):
         return st.session_state.api_response
 
+    def get_num_resps(self):
+        return st.session_state.num_resps
+
+    # def get_action_resps(self):
+    #     return st.session_state.action_resps
+
+    def get_action_response(self, index):
+        return st.session_state.action_resps[index]
+
     def save_api_response(self, response):
         prev_num_resps = len(st.session_state.action_resps)
         st.session_state.api_response = response
@@ -63,3 +72,12 @@ class ApiClient:
     def clr_api_response(self):
         st.session_state.api_response = None
 
+    def render_action_resps(self):
+        with st.popover(
+            label="Open previous response",
+            width="stretch",
+            disabled=(self.get_num_resps() <= 0),
+        ):
+            for i in range(self.get_num_resps()):
+                with st.expander(f"Action: {i}:", expanded=False):
+                    st.write(self.get_action_response(i))

@@ -47,6 +47,9 @@ def main():
                 st.session_state.config_file = config_file
                 api_client.clr_api_response()
 
+            # Render previous responses
+            api_client.render_action_resps()
+
         # リクエスト送信ボタン
         if st.session_state.config_file != "":
             st.write(f"used config file: {st.session_state.config_file}")
@@ -99,6 +102,7 @@ def main():
             if api_response:
                 st.subheader("API レスポンス")
                 response_viewer.render_viewer(api_response)
+
 
     except Exception as e:
         st.error(f"Error occured! {e}")
