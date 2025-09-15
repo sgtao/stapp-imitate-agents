@@ -1,7 +1,5 @@
 # config_api_client.py
 # import json
-import time
-
 import streamlit as st
 
 from components.ApiRequestInputs import ApiRequestInputs
@@ -23,17 +21,12 @@ def initial_session_state():
         st.session_state.config_list = []
     if "config_file" not in st.session_state:
         st.session_state.config_file = ""
-
-
-def _update_api_origin():
-    """
-    _update_api_origin: Callback function of "API Server Origin" input
-    """
-    st.session_state.api_origin = st.session_state._api_origin_input
-    st.session_state.config_list = []
-    st.warning("Clear config list")
-    time.sleep(3)
-    st.rerun()
+    if "api_response" not in st.session_state:
+        st.session_state.api_response = None
+    if "action_resps" not in st.session_state:
+        st.session_state.action_resps = []
+    if "num_resps" not in st.session_state:
+        st.session_state.num_resps = len(st.session_state.action_resps)
 
 
 def post_api_server(uri, config_file="", messages=[]):
@@ -97,7 +90,7 @@ def main():
         # リクエスト送信ボタン
         if st.session_state.config_file != "":
             st.write(f"used config file: {st.session_state.config_file}")
-            api_response = None
+            api_response = st.session_state.api_response
             messages = []
             user_message = st.text_input(
                 label="User Message",
@@ -145,6 +138,10 @@ def main():
             if api_response:
                 st.subheader("API レスポンス")
                 response_viewer.render_viewer(api_response)
+                st.session_state.action_resps.append(api_response.json())
+                st.session_state.num_resps = len(st.session_state.action_resps)
+                st.session_state.api_response = api_response
+
     except Exception as e:
         st.error(f"Error occured! {e}")
 
