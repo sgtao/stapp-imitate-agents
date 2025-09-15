@@ -17,52 +17,8 @@ APP_TITLE = "Config Api Client"
 
 def initial_session_state():
     # セッション状態の初期化
-    # if "api_origin" not in st.session_state:
-    #     st.session_state.api_origin = "http://localhost:3000"
-    # if "config_list" not in st.session_state:
-    #     st.session_state.config_list = []
     if "config_file" not in st.session_state:
         st.session_state.config_file = ""
-    if "api_response" not in st.session_state:
-        st.session_state.api_response = None
-    # if "action_resps" not in st.session_state:
-    #     st.session_state.action_resps = []
-    # if "num_resps" not in st.session_state:
-    #     st.session_state.num_resps = len(st.session_state.action_resps)
-
-
-# def post_api_server(uri, config_file="", messages=[]):
-#     """
-#     APIサーバーへconfig_fileのPOSTリクエストを発行します
-#     - 内部は、ApiRequestor.send_api_request を呼び出すラッパー
-#     """
-#     num_inputs = st.session_state.get("num_inputs", 0)
-#     user_inputs = {}
-
-#     for i in range(num_inputs):
-#         user_key = f"user_input_{i}"
-#         if user_key in st.session_state:
-#             user_inputs[user_key] = st.session_state[user_key]
-#         else:
-#             st.warning(f"Session state key '{user_key}' not found.")
-
-#     try:
-#         api_requestor = ApiRequestor()
-#         response = api_requestor.send_api_request(
-#             uri=uri,
-#             method="POST",
-#             config_file=config_file,
-#             num_inputs=num_inputs,
-#             user_inputs=user_inputs,
-#             messages=messages,
-#         )
-#         # if success, set parameters to session_state for save YAML
-#         st.session_state.uri = uri
-#         st.session_state.metohd = "POST"
-#         st.success("Successfully connected to API Server.")
-#         return response
-#     except Exception as e:
-#         raise e
 
 
 def main():
@@ -89,11 +45,12 @@ def main():
 
             if st.button("Set Config", type="primary"):
                 st.session_state.config_file = config_file
+                api_client.clr_api_response()
 
         # リクエスト送信ボタン
         if st.session_state.config_file != "":
             st.write(f"used config file: {st.session_state.config_file}")
-            api_response = st.session_state.api_response
+            api_response = api_client.get_api_response()
             messages = []
             user_message = st.text_input(
                 label="User Message",
@@ -108,7 +65,8 @@ def main():
                         # APIリクエスト送信
                         uri = request_inputs.make_uri(path="/api/v0/service")
                         api_response = api_client.post_api_server(
-                            uri, st.session_state.config_file
+                            uri=uri,
+                            config_file=st.session_state.config_file,
                         )
                 with col2:
                     if st.button(
@@ -121,9 +79,9 @@ def main():
                             )
                         uri = request_inputs.make_uri(path="/api/v0/messages")
                         api_response = api_client.post_api_server(
-                            uri,
-                            st.session_state.config_file,
-                            messages,
+                            uri=uri,
+                            config_file=st.session_state.config_file,
+                            messages=messages,
                         )
                 with col3:
                     if st.button("Rerun (`R`)", icon="🏃"):
@@ -141,9 +99,6 @@ def main():
             if api_response:
                 st.subheader("API レスポンス")
                 response_viewer.render_viewer(api_response)
-                st.session_state.action_resps.append(api_response.json())
-                st.session_state.num_resps = len(st.session_state.action_resps)
-                st.session_state.api_response = api_response
 
     except Exception as e:
         st.error(f"Error occured! {e}")
