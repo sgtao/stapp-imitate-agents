@@ -103,7 +103,6 @@ def main():
                 st.subheader("API レスポンス")
                 response_viewer.render_viewer(api_response)
 
-
     except Exception as e:
         st.error(f"Error occured! {e}")
 

@@ -1,10 +1,10 @@
 # ClientController.py
 from datetime import datetime
-import json
+
+# import json
 import time
 import yaml
 
-import pandas as pd
 import streamlit as st
 
 
@@ -132,66 +132,41 @@ class ClientController:
             return {}
 
     def set_action_state(self, config):
-        if "session_state" not in config:
-            return
+        _action_states = config.get("action_state", [])
+        if len(_action_states) <= 0:
+            raise "Action State not defined!"
+        _cfg_action_state = _action_states[0]
+        print(f"_cfg_aciton: {_cfg_action_state}")
+        st.session_state.action_state = _cfg_action_state
 
-        cfg_action_state = config.get("session_state", {})
-        # "method": st.session_state.method,
-        # "uri": st.session_state.uri,
-        # "header_df": st.session_state.header_df,
-        # "req_body": st.session_state.req_body,
-        # "use_dynamic_inputs": st.session_state.use_dynamic_inputs,
-        # "user_property_path": st.session_state.user_property_path,
-        if "method" in cfg_action_state:
-            st.session_state.method = cfg_action_state.get("method")
-        if "uri" in cfg_action_state:
-            st.session_state.uri = cfg_action_state.get("uri")
-        # if "header_df" in cfg_action_state:
-        #     st.session_state.uri = cfg_action_state.get("header_df")
+    def get_action_state(self):
+        return st.session_state.action_state
 
-        if "header_df" in cfg_action_state:
-            get_header = cfg_action_state.get("header_df")
-            header_list = []
-            for header_item in get_header:
-                auth_value = header_item["Value"].replace(
-                    "＜API_KEY＞", st.session_state.api_key
-                )
-                header_list.append(
-                    {
-                        "Property": header_item["Property"],
-                        "Value": auth_value,
-                    }
-                )
-            header_df = pd.DataFrame(header_list)
-            st.session_state.header_df = header_df
+    def prepare_api_request(self, action_state):
+        if "method" in action_state:
+            st.session_state.method = action_state.get("method", "")
+        if "uri" in action_state:
+            st.session_state.uri = action_state.get("uri", "")
 
-        if "req_body" in cfg_action_state:
-            # st.session_state.req_body = _req_body
-            _req_body = cfg_action_state.get("req_body")
-            # print(f"req_body type: {type(_req_body)}")
-            if type(_req_body) is str:
-                # 文字列の場合はそのまま使用
-                st.session_state.req_body = _req_body
-            else:
-                # 辞書/リストの場合はJSON形式に変換
-                # st.session_state.req_body = yaml.dump(
-                #     _req_body, allow_unicode=True, default_flow_style=False
-                # )
-                st.session_state.req_body = json.dumps(
-                    _req_body, ensure_ascii=False, indent=4
-                )
-        if "use_dynamic_inputs" in cfg_action_state:
-            if cfg_action_state.get("use_dynamic_inputs") == "false":
+        if "num_inputs" in action_state:
+            st.session_state.num_inputs = action_state.get("num_inputs", 0)
+        for i in range(st.session_state.num_inputs):
+            key = f"user_input_{i}"
+            if key in action_state:
+                st.session_state[key] = action_state[key]
+
+        if "use_dynamic_inputs" in action_state:
+            if action_state.get("use_dynamic_inputs") == "false":
                 st.session_state.use_dynamic_inputs = False
             else:
                 st.session_state.use_dynamic_inputs = True
-        if "user_property_path" in cfg_action_state:
-            st.session_state.user_property_path = cfg_action_state.get(
+        if "user_property_path" in action_state:
+            st.session_state.user_property_path = action_state.get(
                 "user_property_path"
             )
+        print(f"st.session_state: {st.session_state}")
 
     def load_action_state(self):
-
         uploaded_file = st.file_uploader(
             label="Choose a YAML config file",
             type="yaml",
