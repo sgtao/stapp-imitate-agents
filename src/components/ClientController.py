@@ -131,12 +131,12 @@ class ClientController:
             st.error(f"設定ファイルの処理に失敗しました: {str(e)}")
             return {}
 
-    def set_action_state(self, config):
+    def set_action_state(self, config, index=0):
         _action_states = config.get("action_state", [])
         if len(_action_states) <= 0:
             raise "Action State not defined!"
-        _cfg_action_state = _action_states[0]
-        print(f"_cfg_aciton: {_cfg_action_state}")
+        _cfg_action_state = _action_states[index]
+        # print(f"_cfg_aciton: {_cfg_action_state}")
         st.session_state.action_state = _cfg_action_state
 
     def get_action_state(self):
@@ -147,6 +147,8 @@ class ClientController:
             st.session_state.method = action_state.get("method", "")
         if "uri" in action_state:
             st.session_state.uri = action_state.get("uri", "")
+        if "config_file" in action_state:
+            st.session_state.config_file = action_state.get("config_file", "")
 
         if "num_inputs" in action_state:
             st.session_state.num_inputs = action_state.get("num_inputs", 0)
@@ -164,7 +166,7 @@ class ClientController:
             st.session_state.user_property_path = action_state.get(
                 "user_property_path"
             )
-        print(f"st.session_state: {st.session_state}")
+        # print(f"st.session_state: {st.session_state}")
 
     def load_action_state(self):
         uploaded_file = st.file_uploader(

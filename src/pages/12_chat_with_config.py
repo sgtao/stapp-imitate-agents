@@ -1,13 +1,13 @@
 # 12_chat_with_config.py
-import time
+# import time
 
 import streamlit as st
 
-# from components.ApiRequestInputs import ApiRequestInputs
-# from components.ResponseViewer import ResponseViewer
+from components.ApiClient import ApiClient
 from components.ChatMessage import ChatMessage
 from components.ClientController import ClientController
 from components.ConfigFiles import ConfigFiles
+from components.ResponseViewer import ResponseViewer
 from components.SideMenus import SideMenus
 
 # from functions.ApiRequestor import ApiRequestor
@@ -23,13 +23,32 @@ def initial_session_state():
         st.session_state.use_sys_prompt = False
 
 
-def post_messages_with_config(messages=[]):
-    time.sleep(3)
-    response_messaeg = {"role": "assistant", "content": "Hello again!"}
-    if len(messages) > 0:
-        return messages[-1]
-    else:
-        return response_messaeg
+def post_messages_with_config(
+    uri="http://localhost:3000/api/v0/messages",
+    messages=[],
+):
+    # time.sleep(3)
+    # response_messaeg = {"role": "assistant", "content": "Hello again!"}
+    # if len(messages) > 0:
+    #     return messages[-1]
+    # else:
+    #     return response_messaeg
+    # APIリクエスト送信
+    api_client = ApiClient()
+    client_controller = ClientController()
+    response_viewer = ResponseViewer()
+    action_state = client_controller.get_action_state()
+    client_controller.prepare_api_request(action_state)
+
+    response = api_client.post_api_server(
+        uri=st.session_state.uri,
+        config_file=st.session_state.config_file,
+        messages=messages,
+    )
+
+    api_response = response_viewer.extract_response_value(response)
+    # print(f"api_response: {api_response}")
+    return api_response
 
 
 def main():
@@ -69,19 +88,20 @@ def main():
         # アシスタントの応答
         with st.chat_message("assistant"):
             with st.spinner("考え中..."):
-                action_state = client_controller.get_action_state()
-                client_controller.prepare_api_request(action_state)
                 assistant_response = post_messages_with_config(
-                    # messages=st.session_state.messages,
                     messages=chat_message.get_messages(),
                 )
-                st.markdown(assistant_response.get("content"),)
+                # st.markdown(
+                #     # assistant_response.get("results"),
+                #     assistant_response.json().get("results"),
+                # )
 
-                # chat_message.add(role="assistant", content=assistant_response)
                 chat_message.add(
                     # role=assistant_response.get("role"),
                     role="assistant",
-                    content=assistant_response.get("content"),
+                    # content=assistant_response.get("results"),
+                    # content=assistant_response.json().get("results"),
+                    content=assistant_response,
                 )
                 st.rerun()
 
