@@ -19,8 +19,8 @@ APP_TITLE = "Chat with Config"
 
 def initial_session_state():
     # セッション状態の初期化
-    if "use_sys_prompt" not in st.session_state:
-        st.session_state.use_sys_prompt = False
+    if "config_file_path" not in st.session_state:
+        st.session_state.config_file_path = ""
 
 
 def post_messages_with_config(
@@ -74,37 +74,53 @@ def main():
         config = config_files.load_config_from_yaml(selected_config_file)
         config_files.render_config_viewer(selected_config_file, config)
         client_controller.set_action_config(config, 0)
+        st.session_state.config_file_path = selected_config_file
         chat_message.reset()
 
     # Chat with Config
-    chat_message.display_chat_history()
+    with st.container(height="stretch"):
+        chat_message.display_chat_history()
 
-    # ユーザー入力
-    if prompt := st.chat_input("メッセージを入力してください:"):
-        # # 最初のメッセージは`system_prompt`を付与する
-        # chat_message.append_system_prompts()
+        # ユーザー入力
+        diff_config = st.session_state.config_file_path != selected_config_file
+        if prompt := st.chat_input(
+            placeholder="メッセージを入力してください:",
+            disabled=diff_config,
+        ):
+            chat_message.add(role="user", content=prompt)
 
-        chat_message.add(role="user", content=prompt)
+            # アシスタントの応答
+            with st.chat_message("assistant"):
+                with st.spinner("考え中..."):
+                    assistant_response = post_messages_with_config(
+                        messages=chat_message.get_messages(),
+                    )
 
-        # アシスタントの応答
-        with st.chat_message("assistant"):
-            with st.spinner("考え中..."):
-                assistant_response = post_messages_with_config(
-                    messages=chat_message.get_messages(),
-                )
-                # st.markdown(
-                #     # assistant_response.get("results"),
-                #     assistant_response.json().get("results"),
-                # )
-
-                chat_message.add(
-                    # role=assistant_response.get("role"),
-                    role="assistant",
-                    # content=assistant_response.get("results"),
-                    # content=assistant_response.json().get("results"),
-                    content=assistant_response,
-                )
-                st.rerun()
+                    chat_message.add(
+                        role="assistant",
+                        content=assistant_response,
+                    )
+                    st.rerun()
+    # page footer
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button(
+            label="Copy Response",
+            help="Not implemented yet",
+            icon="📋",
+        ):
+            pass
+    with col2:
+        if st.button(
+            label="Reset Chat",
+            help="Clear Chat Messages",
+            icon="🔄",
+        ):
+            chat_message.reset()
+            st.rerun()
+    with col3:
+        pass
+    st.write("This is outside the container")
 
 
 if __name__ == "__main__":
