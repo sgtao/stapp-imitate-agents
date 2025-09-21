@@ -1,5 +1,6 @@
 # ClientController.py
 from datetime import datetime
+import urllib.parse
 
 # import json
 import time
@@ -131,42 +132,90 @@ class ClientController:
             st.error(f"設定ファイルの処理に失敗しました: {str(e)}")
             return {}
 
-    def set_action_state(self, config, index=0):
+    def set_action_config(self, config, index=0):
         _action_states = config.get("action_state", [])
         if len(_action_states) <= 0:
             raise "Action State not defined!"
         _cfg_action_state = _action_states[index]
         # print(f"_cfg_aciton: {_cfg_action_state}")
-        st.session_state.action_state = _cfg_action_state
+        st.session_state.action_config = _cfg_action_state
 
-    def get_action_state(self):
-        return st.session_state.action_state
+    def get_action_config(self):
+        return st.session_state.action_config
 
-    def prepare_api_request(self, action_state):
-        if "method" in action_state:
-            st.session_state.method = action_state.get("method", "")
-        if "uri" in action_state:
-            st.session_state.uri = action_state.get("uri", "")
-        if "config_file" in action_state:
-            st.session_state.config_file = action_state.get("config_file", "")
+    def replace_placeholder(self, session_state, target_str: str) -> str:
+        """
+        プレースホルダー（例: ＜user_input_0＞）を
+        session_state 内のユーザー入力値で置換する。
 
-        if "num_inputs" in action_state:
-            st.session_state.num_inputs = action_state.get("num_inputs", 0)
-        for i in range(st.session_state.num_inputs):
+        Args:
+            session_state (dict): Streamlitのセッション状態
+            target_str (str): プレースホルダーを含む文字列
+
+        Returns:
+            str: プレースホルダーが置換された文字列
+        """
+        replaced_str = target_str
+        num_inputs = session_state.get("num_inputs", 0)
+
+        for i in range(num_inputs):
             key = f"user_input_{i}"
-            if key in action_state:
-                st.session_state[key] = action_state[key]
+            if key in session_state:
+                value = urllib.parse.quote(str(session_state[key]))
+                replaced_str = replaced_str.replace(f"＜{key}＞", value)
 
-        if "use_dynamic_inputs" in action_state:
-            if action_state.get("use_dynamic_inputs") == "false":
-                st.session_state.use_dynamic_inputs = False
-            else:
-                st.session_state.use_dynamic_inputs = True
-        if "user_property_path" in action_state:
-            st.session_state.user_property_path = action_state.get(
-                "user_property_path"
+        return replaced_str
+
+    def replace_action_config(self, action_config):
+        """
+        指定されたアクション設定（action_config）を置換する。
+
+        Args:
+            action_config (dict): YAML設定ファイルなどから読み込まれた
+        Side Effects:
+            - `action_state`の値の特定キーワードを置換する
+            - 置換対象：
+                - config_file
+                - user_input_{i}
+            - 対象外：
+                - method, uri, num_inputs
+                - use_dynamic_inputs, user_property_path
+        """
+        _replaced_config = {}
+        if "method" in action_config:
+            _replaced_config["method"] = action_config.get("method", "")
+        if "uri" in action_config:
+            _replaced_config["uri"] = action_config.get("uri", "")
+        if "config_file" in action_config:
+            # _replaced_config["config_file"] = action_config.get(
+            #     "config_file", ""
+            # )
+            _replaced_config["config_file"] = self.replace_placeholder(
+                session_state=st.session_state,
+                target_str=action_config.get("config_file", ""),
             )
-        # print(f"st.session_state: {st.session_state}")
+
+        _num_inputs = action_config.get("num_inputs", 0)
+        _replaced_config["num_inputs"] = _num_inputs
+        for i in range(_num_inputs):
+            key = f"user_input_{i}"
+            if key in action_config:
+                # _replaced_config[key] = action_config.get(key, "")
+                _replaced_config[key] = self.replace_placeholder(
+                    session_state=st.session_state,
+                    target_str=action_config.get(key, ""),
+                )
+
+        if "use_dynamic_inputs" in action_config:
+            if action_config.get("use_dynamic_inputs") == "false":
+                _replaced_config["use_dynamic_inputs"] = False
+            else:
+                _replaced_config["use_dynamic_inputs"] = True
+        if "user_property_path" in action_config:
+            _replaced_config["user_property_path"] = action_config.get(
+                "user_property_path", "."
+            )
+        return _replaced_config
 
     def load_action_state(self):
         uploaded_file = st.file_uploader(

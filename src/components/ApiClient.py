@@ -51,6 +51,44 @@ class ApiClient:
         except Exception as e:
             raise e
 
+    def post_msg_with_action_config(self, action_config, messages=[]):
+        """
+        APIサーバーへ`action_config`のPOSTリクエストを発行します
+        - 内部は、ApiRequestor.send_api_request を呼び出すラッパー
+        """
+        st.session_state.api_response = None
+        # print(f"action_config: {action_config}")
+        uri = action_config.get("uri", "")
+        num_inputs = action_config.get("num_inputs", 0)
+        config_file = action_config.get("config_file", "")
+        user_inputs = {}
+
+        for i in range(num_inputs):
+            user_key = f"user_input_{i}"
+            if user_key in action_config:
+                user_inputs[user_key] = action_config.get(user_key, "")
+            else:
+                st.warning(f"Session state key '{user_key}' not found.")
+
+        try:
+            api_requestor = ApiRequestor()
+            response = api_requestor.send_api_request(
+                uri=uri,
+                method="POST",
+                config_file=config_file,
+                num_inputs=num_inputs,
+                user_inputs=user_inputs,
+                messages=messages,
+            )
+            # if success, set parameters to session_state for save YAML
+            st.session_state.uri = uri
+            st.session_state.metohd = "POST"
+            st.success("Successfully connected to API Server.")
+            self.save_api_response(response)
+            return response
+        except Exception as e:
+            raise e
+
     def get_api_response(self):
         return st.session_state.api_response
 

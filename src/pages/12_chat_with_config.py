@@ -37,12 +37,12 @@ def post_messages_with_config(
     api_client = ApiClient()
     client_controller = ClientController()
     response_viewer = ResponseViewer()
-    action_state = client_controller.get_action_state()
-    client_controller.prepare_api_request(action_state)
+    action_config = client_controller.get_action_config()
+    # client_controller.prepare_api_request(action_config)
+    action_config = client_controller.replace_action_config(action_config)
 
-    response = api_client.post_api_server(
-        uri=st.session_state.uri,
-        config_file=st.session_state.config_file,
+    response = api_client.post_msg_with_action_config(
+        action_config=action_config,
         messages=messages,
     )
 
@@ -73,7 +73,8 @@ def main():
     if st.button("Load Config."):
         config = config_files.load_config_from_yaml(selected_config_file)
         config_files.render_config_viewer(selected_config_file, config)
-        client_controller.set_action_state(config)
+        client_controller.set_action_config(config, 0)
+        chat_message.reset()
 
     # Chat with Config
     chat_message.display_chat_history()

@@ -18,10 +18,10 @@ class ChatMessage:
 
     def reset(self):
         st.session_state.messages = [
-            {
-                "role": "system",
-                "content": self.system_prompt,
-            },
+            # {
+            #     "role": "system",
+            #     "content": self.system_prompt,
+            # },
         ]
 
     def add(self, role: str, content: str):
