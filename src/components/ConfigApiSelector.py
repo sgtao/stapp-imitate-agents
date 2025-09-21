@@ -125,11 +125,7 @@ class ConfigApiSelector:
                 note = response_viewer.extract_response_value(
                     response=response, path="results.note"
                 )
-                st.info(
-                    f"""
-                        - Title: {title}\n
-                        - Note: {note}
-                        """
-                )
+                st.info(f"Title: {title}")
+                st.warning(f"- Note: {note}")
             except Exception as e:
                 st.warning(f"Cannot find Title or Note in config_file: {e}")
