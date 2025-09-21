@@ -1,5 +1,5 @@
 # 12_chat_with_config.py
-# import time
+import time
 
 import streamlit as st
 
@@ -49,6 +49,33 @@ def post_messages_with_config(
     api_response = response_viewer.extract_response_value(response)
     # print(f"api_response: {api_response}")
     return api_response
+
+
+class ChatModal:
+    @st.dialog("Chat Modal.", width="large")
+    def modal(self, type, messages):
+        st.write(f"Modal for {type}:")
+        if type == "copy_response":
+            if len(messages) > 0:
+                self.copy_action(message=messages[-1])
+            else:
+                st.warning("Message not found!")
+            self._modal_closer()
+        else:
+            st.write("No Definition.")
+
+    def _modal_closer(self):
+        if st.button(label="Close Modal"):
+            st.info("モーダルを閉じます...")
+            time.sleep(1)
+            st.rerun()
+
+    # 『Copy』モーダル：
+    def copy_action(self, message):
+        with st.expander("Last message", expanded=False):
+            with st.container(horizontal_alignment="right"):
+                st.write("右上にコピーアイコンがあります👇")
+                st.code(message.get("content", ""))
 
 
 def main():
@@ -102,14 +129,18 @@ def main():
                     )
                     st.rerun()
     # page footer
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         if st.button(
             label="Copy Response",
-            help="Not implemented yet",
+            help="Copy last response",
             icon="📋",
         ):
-            pass
+            chat_modal = ChatModal()
+            chat_modal.modal(
+                type="copy_response",
+                messages=chat_message.get_messages(),
+            )
     with col2:
         if st.button(
             label="Reset Chat",
@@ -120,7 +151,8 @@ def main():
             st.rerun()
     with col3:
         pass
-    st.write("This is outside the container")
+    with col4:
+        pass
 
 
 if __name__ == "__main__":
