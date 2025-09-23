@@ -1,0 +1,21 @@
+# answer_message_inEN.yaml
+title: answer user_message in English
+note: |
+  I will answer user messages in English.
+  - step1: get chat completion from messages
+  - step2: translate step1 result to English
+action_state:
+- config_file: privates/202_submit_user_message.yaml
+  method: POST
+  num_inputs: 1
+  uri: http://localhost:3000/api/v0/messages
+  use_dynamic_inputs: true
+  user_input_0: openai/gpt-oss-20b
+  user_property_path: results
+- config_file: privates/122_transEN_user_input0.yaml
+  method: POST
+  num_inputs: 1
+  uri: http://localhost:3000/api/v0/service
+  use_dynamic_inputs: true
+  user_input_0: ＜action_result_0＞
+  user_property_path: results
