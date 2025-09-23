@@ -13,6 +13,10 @@ class ClientController:
     def __init__(self) -> None:
         if "api_running" not in st.session_state:
             st.session_state.api_running = False
+        if "action_configs" not in st.session_state:
+            st.session_state.action_configs = []
+        if "action_results" not in st.session_state:
+            st.session_state.action_results = []
 
     @st.dialog("Setting Info.")
     def modal(self, type):
@@ -132,18 +136,20 @@ class ClientController:
             st.error(f"設定ファイルの処理に失敗しました: {str(e)}")
             return {}
 
-    def set_action_config(self, config, index=0):
+    # def set_action_config(self, config, index=0):
+    def set_action_configs(self, config):
+        st.session_state.action_configs = []
         _action_states = config.get("action_state", [])
         if len(_action_states) <= 0:
             raise "Action State not defined!"
-        _cfg_action_state = _action_states[index]
-        # print(f"_cfg_aciton: {_cfg_action_state}")
-        st.session_state.action_config = _cfg_action_state
+        for index in range(len(_action_states)):
+            _cfg_action_state = _action_states[index]
+            st.session_state.action_configs.append(_cfg_action_state)
 
-    def get_action_config(self):
-        return st.session_state.action_config
+    def get_action_config(self, index=0):
+        return st.session_state.action_configs[index]
 
-    def replace_placeholder(self, session_state, target_str: str) -> str:
+    def replace_placeholder(self, session_state, target_str):
         """
         プレースホルダー（例: ＜user_input_0＞）を
         session_state 内のユーザー入力値で置換する。
@@ -156,13 +162,22 @@ class ClientController:
             str: プレースホルダーが置換された文字列
         """
         replaced_str = target_str
-        num_inputs = session_state.get("num_inputs", 0)
 
+        # replace target using user_input
+        num_inputs = session_state.get("num_inputs", 0)
         for i in range(num_inputs):
             key = f"user_input_{i}"
             if key in session_state:
                 value = urllib.parse.quote(str(session_state[key]))
                 replaced_str = replaced_str.replace(f"＜{key}＞", value)
+
+        # replace target using action_results
+        _action_results = session_state.get("action_results", [])
+        num_results = len(_action_results)
+        for i in range(num_results):
+            key = f"action_result_{i}"
+            value = _action_results[i]
+            replaced_str = replaced_str.replace(f"＜{key}＞", value)
 
         return replaced_str
 
@@ -195,6 +210,7 @@ class ClientController:
                 target_str=action_config.get("config_file", ""),
             )
 
+        # replace request body (user_input key)
         _num_inputs = action_config.get("num_inputs", 0)
         _replaced_config["num_inputs"] = _num_inputs
         for i in range(_num_inputs):

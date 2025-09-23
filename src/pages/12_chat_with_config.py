@@ -37,16 +37,21 @@ def post_messages_with_config(
     api_client = ApiClient()
     client_controller = ClientController()
     response_viewer = ResponseViewer()
-    action_config = client_controller.get_action_config()
-    # client_controller.prepare_api_request(action_config)
-    action_config = client_controller.replace_action_config(action_config)
+    # clear action_results
+    st.session_state.action_results = []
 
-    response = api_client.post_msg_with_action_config(
-        action_config=action_config,
-        messages=messages,
-    )
+    for index in range(len(st.session_state.action_configs)):
+        action_config = client_controller.get_action_config(index)
+        action_config = client_controller.replace_action_config(action_config)
 
-    api_response = response_viewer.extract_response_value(response)
+        response = api_client.post_msg_with_action_config(
+            action_config=action_config,
+            messages=messages,
+        )
+
+        api_response = response_viewer.extract_response_value(response)
+        st.session_state.action_results.append(api_response)
+
     # print(f"api_response: {api_response}")
     return api_response
 
@@ -100,7 +105,7 @@ def main():
     if st.button("Load Config."):
         config = config_files.load_config_from_yaml(selected_config_file)
         config_files.render_config_viewer(selected_config_file, config)
-        client_controller.set_action_config(config, 0)
+        client_controller.set_action_configs(config)
         st.session_state.config_file_path = selected_config_file
         chat_message.reset()
 
