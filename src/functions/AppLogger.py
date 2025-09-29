@@ -3,13 +3,11 @@ import logging
 import os
 
 LOG_DIR = "logs"
-DEFAULT_LOGFILE_PATH = "logs/api_request.log"
+DEFAULT_LOG_FILE = os.path.join("logs", "api_request.log")
 
 
 class AppLogger:
-    def __init__(
-        self, name, log_file=DEFAULT_LOGFILE_PATH, level=logging.DEBUG
-    ):
+    def __init__(self, name, log_file=DEFAULT_LOG_FILE, level=logging.DEBUG):
         """
         ロガーを設定するクラス
         :param name: ロガー名

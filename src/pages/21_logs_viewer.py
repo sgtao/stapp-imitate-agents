@@ -9,7 +9,7 @@ from functions.AppLogger import AppLogger
 
 # APP_TITLE = "APIクライアントアプリ"
 APP_TITLE = "Log Viewer"
-DEFAULT_LOG_FILE = "logs/api_request.log"
+DEFAULT_LOG_FILE = os.path.join("logs", "api_request.log")
 
 
 def render_log_selector(app_logger):
