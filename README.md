@@ -14,13 +14,16 @@ poetry install
 ## Bash/Zsh/Csh # for poetry 2.x version
 eval $(poetry env activate)
 
-## Powershell
-Invoke-Expression (poetry env activate)
-## Fish
-eval (poetry env activate)
+## when Fish
+# eval (poetry env activate)
 
 # when finish poetry virtual env.
 deactivate
+```
+
+#### activate for Windows
+```PowerShell
+Invoke-Expression (poetry env activate)
 ```
 
 ### コマンド一覧
