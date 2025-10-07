@@ -31,7 +31,8 @@ class ResponseOperator:
             value = json_data
 
             # when property_path has wildcard like "data[*].id"
-            if "[*]" in property_path:
+            # if "[*]" in property_path:
+            if "*" in property_path:
                 value = jmespath.search(property_path, value)
                 return value
 
