@@ -43,19 +43,28 @@ def post_messages_with_config(
 
     for index in range(len(st.session_state.action_configs)):
         action_config = client_controller.get_action_config(index)
-        action_config = client_controller.replace_action_config(action_config)
+        action_config = client_controller.replace_action_config(
+            action_config=action_config, action_results=action_results
+        )
+
+        # print(f"index({index}): {action_config}")
 
         response = api_client.post_msg_with_action_config(
             action_config=action_config,
             messages=messages,
         )
 
-        api_response = response_viewer.extract_response_value(response)
+        # print(f"response: {response.json()}")
+
+        api_response = response_viewer.extract_response_value(
+            response=response,
+            path=action_config.get("user_property_path", "."),
+        )
         # st.session_state.action_results.append(api_response)
         action_results.append(api_response)
+        st.session_state.action_results = action_results
 
     # print(f"api_response: {api_response}")
-    st.session_state.action_results = action_results
     return api_response
 
 

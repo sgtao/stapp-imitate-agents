@@ -149,15 +149,17 @@ class ClientController:
     def get_action_config(self, index=0):
         return st.session_state.action_configs[index]
 
-    def replace_placeholder(self, session_state, action_results, target_str):
+    def replace_placeholder(
+        self, session_state, target_str, action_results=[]
+    ):
         """
         プレースホルダー（例: ＜user_input_0＞）を
         session_state 内のユーザー入力値で置換する。
 
         Args:
             session_state (dict): Streamlitのセッション状態
-            action_results(list): 実行途中の結果
             target_str (str): プレースホルダーを含む文字列
+            action_results(list): 実行途中の結果
 
         Returns:
             str: プレースホルダーが置換された文字列
@@ -174,11 +176,13 @@ class ClientController:
 
         # replace target using action_results
         # _action_results = session_state.get("action_results", [])
-        _action_results = action_results
-        num_results = len(_action_results)
+        # _action_results = action_results
+        num_results = len(action_results)
         for i in range(num_results):
             key = f"action_result_{i}"
-            value = _action_results[i]
+            value = str(action_results[i])
+            # _value = urllib.parse.quote(str(action_results[i]))
+            # value = _value.replace('"', " ").replace("'", " ")
             replaced_str = replaced_str.replace(f"＜{key}＞", value)
 
         return replaced_str
@@ -210,8 +214,8 @@ class ClientController:
             # )
             _replaced_config["config_file"] = self.replace_placeholder(
                 session_state=st.session_state,
-                action_results=action_results,
                 target_str=action_config.get("config_file", ""),
+                action_results=action_results,
             )
 
         # replace request body (user_input key)
@@ -223,8 +227,8 @@ class ClientController:
                 # _replaced_config[key] = action_config.get(key, "")
                 _replaced_config[key] = self.replace_placeholder(
                     session_state=st.session_state,
-                    action_results=action_results,
                     target_str=action_config.get(key, ""),
+                    action_results=action_results,
                 )
 
         if "use_dynamic_inputs" in action_config:
