@@ -159,13 +159,7 @@ def main():
                 messages=chat_message.get_messages(),
             )
     with col2:
-        if st.button(
-            label="Reset Chat",
-            help="Clear Chat Messages",
-            icon="🔄",
-        ):
-            chat_message.reset()
-            st.rerun()
+        pass
     with col3:
         pass
     with col4:
