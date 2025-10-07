@@ -38,7 +38,8 @@ def post_messages_with_config(
     client_controller = ClientController()
     response_viewer = ResponseViewer()
     # clear action_results
-    st.session_state.action_results = []
+    # st.session_state.action_results = []
+    action_results = []
 
     for index in range(len(st.session_state.action_configs)):
         action_config = client_controller.get_action_config(index)
@@ -50,9 +51,11 @@ def post_messages_with_config(
         )
 
         api_response = response_viewer.extract_response_value(response)
-        st.session_state.action_results.append(api_response)
+        # st.session_state.action_results.append(api_response)
+        action_results.append(api_response)
 
     # print(f"api_response: {api_response}")
+    st.session_state.action_results = action_results
     return api_response
 
 

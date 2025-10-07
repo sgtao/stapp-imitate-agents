@@ -149,13 +149,14 @@ class ClientController:
     def get_action_config(self, index=0):
         return st.session_state.action_configs[index]
 
-    def replace_placeholder(self, session_state, target_str):
+    def replace_placeholder(self, session_state, action_results, target_str):
         """
         プレースホルダー（例: ＜user_input_0＞）を
         session_state 内のユーザー入力値で置換する。
 
         Args:
             session_state (dict): Streamlitのセッション状態
+            action_results(list): 実行途中の結果
             target_str (str): プレースホルダーを含む文字列
 
         Returns:
@@ -172,7 +173,8 @@ class ClientController:
                 replaced_str = replaced_str.replace(f"＜{key}＞", value)
 
         # replace target using action_results
-        _action_results = session_state.get("action_results", [])
+        # _action_results = session_state.get("action_results", [])
+        _action_results = action_results
         num_results = len(_action_results)
         for i in range(num_results):
             key = f"action_result_{i}"
@@ -181,12 +183,13 @@ class ClientController:
 
         return replaced_str
 
-    def replace_action_config(self, action_config):
+    def replace_action_config(self, action_config, action_results=[]):
         """
         指定されたアクション設定（action_config）を置換する。
 
         Args:
             action_config (dict): YAML設定ファイルなどから読み込まれた
+            action_results (list): 実行途中の結果
         Side Effects:
             - `action_state`の値の特定キーワードを置換する
             - 置換対象：
@@ -207,6 +210,7 @@ class ClientController:
             # )
             _replaced_config["config_file"] = self.replace_placeholder(
                 session_state=st.session_state,
+                action_results=action_results,
                 target_str=action_config.get("config_file", ""),
             )
 
@@ -219,6 +223,7 @@ class ClientController:
                 # _replaced_config[key] = action_config.get(key, "")
                 _replaced_config[key] = self.replace_placeholder(
                     session_state=st.session_state,
+                    action_results=action_results,
                     target_str=action_config.get(key, ""),
                 )
 
