@@ -240,6 +240,20 @@ class ClientController:
             _replaced_config["user_property_path"] = action_config.get(
                 "user_property_path", "."
             )
+
+        return _replaced_config
+
+    def replace_extract_config(self, action_config, action_results=[]):
+        _replaced_config = action_config
+
+        # for action of `extract` type
+        if "target" in action_config:
+            _replaced_config["target"] = self.replace_placeholder(
+                session_state=st.session_state,
+                target_str=action_config.get("target", ""),
+                action_results=action_results,
+            )
+
         return _replaced_config
 
     def load_action_state(self):
