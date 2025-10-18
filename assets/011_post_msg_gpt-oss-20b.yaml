@@ -2,7 +2,7 @@ title: post_msg_gpt-oss-20b.yaml
 note: |
   - post message to gpt-oss-20b via Simple API Client
 action_state:
-- config_file: privates/202_submit_user_message.yaml
+- config_file: assets/002_submit_user_message.yaml
   method: POST
   num_inputs: 1
   uri: http://localhost:3000/api/v0/messages
