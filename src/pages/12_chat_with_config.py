@@ -63,10 +63,14 @@ def post_messages_with_config(
 
             # print(f"response: {response.json()}")
 
-            _action_result = response_viewer.extract_response_value(
-                response=response,
-                path=action_config.get("user_property_path", "."),
-            )
+            try:
+                _action_result = response_viewer.extract_response_value(
+                    response=response,
+                    path=action_config.get("user_property_path", "."),
+                )
+            except Exception:
+                _action_result = response.json()
+
         elif _action_type == "extract":
             _response_op = ResponseOperator()
             action_config = client_controller.replace_extract_config(
@@ -81,11 +85,13 @@ def post_messages_with_config(
             #     - target {_target_obj}
             #     """
             # )
-
-            _action_result = _response_op.extract_property_from_json(
-                json_data=_target_obj,
-                property_path=action_config.get("user_property_path", "."),
-            )
+            try:
+                _action_result = _response_op.extract_property_from_json(
+                    json_data=_target_obj,
+                    property_path=action_config.get("user_property_path", "."),
+                )
+            except Exception:
+                _action_result = _target_text
         else:
             _action_result = "Nothing!"
         # st.session_state.action_results.append(action_result)
