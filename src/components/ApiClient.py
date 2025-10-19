@@ -30,7 +30,9 @@ class ApiClient:
             if user_key in st.session_state:
                 user_inputs[user_key] = st.session_state[user_key]
             else:
-                st.warning(f"Session state key '{user_key}' not found.")
+                self.show_warning_ui(
+                    f"Session state key '{user_key}' not found."
+                )
 
         try:
             api_requestor = ApiRequestor()
@@ -43,20 +45,35 @@ class ApiClient:
                 messages=messages,
             )
             # if success, set parameters to session_state for save YAML
-            st.session_state.uri = uri
-            st.session_state.metohd = "POST"
-            st.success("Successfully connected to API Server.")
-            self.save_api_response(response)
+            self.show_success_ui(
+                "Successfully connected to API Server.",
+                uri=uri,
+                response=response,
+            )
+
             return response
         except Exception as e:
             raise e
+
+    def show_warning_ui(self, message):
+        """ユーザー入力キーが欠けている場合の警告"""
+        st.warning(message)
+
+    def show_success_ui(self, message, uri="", response=None):
+        """成功時のUI表示とセッション更新"""
+        if uri != "":
+            st.session_state.uri = uri
+            st.session_state.method = "POST"
+        if response is not None:
+            self.save_api_response(response)
+        st.success(message)
 
     def post_msg_with_action_config(self, action_config, messages=[]):
         """
         APIサーバーへ`action_config`のPOSTリクエストを発行します
         - 内部は、ApiRequestor.send_api_request を呼び出すラッパー
         """
-        st.session_state.api_response = None
+        # st.session_state.api_response = None
         # print(f"action_config: {action_config}")
         uri = action_config.get("uri", "")
         num_inputs = action_config.get("num_inputs", 0)
@@ -68,7 +85,9 @@ class ApiClient:
             if user_key in action_config:
                 user_inputs[user_key] = action_config.get(user_key, "")
             else:
-                st.warning(f"Session state key '{user_key}' not found.")
+                self.show_warning_ui(
+                    f"Session state key '{user_key}' not found."
+                )
 
         try:
             api_requestor = ApiRequestor()
@@ -81,10 +100,11 @@ class ApiClient:
                 messages=messages,
             )
             # if success, set parameters to session_state for save YAML
-            st.session_state.uri = uri
-            st.session_state.metohd = "POST"
-            st.success("Successfully connected to API Server.")
-            self.save_api_response(response)
+            self.show_success_ui(
+                "Successfully connected to API Server.",
+                uri=uri,
+                response=response,
+            )
             return response
         except Exception as e:
             raise e

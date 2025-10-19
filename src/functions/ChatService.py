@@ -1,64 +1,74 @@
 # ChatService.py
 import json
-from components.ApiClient import ApiClient
-from components.ClientController import ClientController
-from components.ResponseViewer import ResponseViewer
+
+from functions.ApiClientCore import ApiClientCore
 from functions.AppLogger import AppLogger
+from functions.ClientConfigManager import ClientConfigManager
 from functions.ResponseOperator import ResponseOperator
 
-APP_TITLE = "Chat with Config"
+APP_TITLE = "ChatService"
 
 
 class ChatService:
     def __init__(self):
-        self.api_client = ApiClient()
-        self.client_controller = ClientController()
-        self.response_viewer = ResponseViewer()
         self.app_logger = AppLogger(APP_TITLE)
+        # instanciation using functions
+        self.config_mgr = ClientConfigManager()
+        self.client = ApiClientCore(self.app_logger)
+        self.response_op = ResponseOperator()
 
-    def post_messages_with_config(self, messages, action_configs):
-        action_results = []
+    def post_messages_with_configs(
+        self,
+        messages,
+        session_state,
+        action_configs,
+    ):
+        results = []
+        result = ""
 
-        for index, action_config in enumerate(action_configs):
-            _type = action_config.get("type", "request")
-            _result = ""
+        for index, cfg in enumerate(action_configs):
+            # print(cfg)
+            _type = cfg.get("type", "request")
 
             if _type == "request":
-                action_config = self.client_controller.replace_action_config(
-                    action_config, action_results
-                )
-                response = self.api_client.post_msg_with_action_config(
-                    action_config=action_config, messages=messages
-                )
                 try:
-                    _result = self.response_viewer.extract_response_value(
+                    action_config = self.config_mgr.replace_action_config(
+                        session_state, cfg, results
+                    )
+                    # print(action_config)
+                    response = self.client.post_msgs_with_config(
+                        config=action_config,
+                        messages=messages,
+                    )
+                    result = self.response_op.extract_response_value(
                         response,
                         path=action_config.get("user_property_path", "."),
                     )
                 except Exception:
-                    _result = response.json()
+                    result = response.json()
 
             elif _type == "extract":
-                _response_op = ResponseOperator()
-                action_config = self.client_controller.replace_extract_config(
-                    action_config, action_results
+                action_config = self.config_mgr.replace_extract_config(
+                    session_state=session_state,
+                    action_config=cfg,
+                    results=results,
                 )
                 _target_text = action_config.get("target", "")
                 _target_obj = json.loads(_target_text)
                 try:
-                    _result = _response_op.extract_property_from_json(
+                    result = self.response_op.extract_property_from_json(
                         json_data=_target_obj,
                         property_path=action_config.get(
                             "user_property_path", "."
                         ),
                     )
                 except Exception:
-                    _result = _target_text
+                    result = _target_text
 
             else:
-                _result = "Nothing!"
+                result = "Nothing!"
 
-            action_results.append(_result)
-            self.app_logger.info_log(f"Action result_{index} : {_result}")
+            results.append(result)
+            self.app_logger.info_log(f"Action result_{index}: {result}")
 
-        return action_results[-1] if action_results else None
+        return results[-1] if results else None

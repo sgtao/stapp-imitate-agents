@@ -68,7 +68,8 @@ def main():
                     #     messages=chat_message.get_messages(),
                     # )
                     assistant_response = (
-                        chat_service.post_messages_with_config(
+                        chat_service.post_messages_with_configs(
+                            session_state=st.session_state,
                             messages=chat_message.get_messages(),
                             action_configs=st.session_state.action_configs,
                         )

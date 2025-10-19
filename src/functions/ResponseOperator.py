@@ -67,3 +67,33 @@ class ResponseOperator:
         except (KeyError, TypeError, IndexError) as e:
             # プロパティが見つからない場合はエラーメッセージを返す
             raise f"プロパティの抽出に失敗しました: {e}"
+
+    def response_content(self, response):
+        content_type = response.headers.get("Content-Type", "")
+        if "application/json" in content_type:
+            return "application/json"
+        elif "text/html" in content_type:
+            return "text/html"
+        elif "text/plain" in content_type:
+            return "text/plain"
+        else:
+            return "unsupported"
+
+    def extract_response_value(self, response, path=None):
+        try:
+            content_type = self.response_content(response)
+            # 抽出したいプロパティの指定
+            if path is None:
+                property_path = "."
+            else:
+                property_path = path
+
+            if content_type == "application/json":
+                response_json = response.json()  # JSON形式の場合
+                return self.extract_property_from_json(
+                    response_json, property_path
+                )
+            else:
+                return response.text
+        except Exception as e:
+            raise e
