@@ -1,8 +1,6 @@
 # ApiClientCore.py
-# logic/ApiClientCore.py
-import requests
 
-from components.ApiClient import ApiClient
+# from components.ApiClient import ApiClient
 from functions.AppLogger import AppLogger
 from functions.ApiRequestor import ApiRequestor
 
@@ -12,13 +10,7 @@ APP_TITLE = "ApiClientCore"
 class ApiClientCore:
     def __init__(self, logger: AppLogger = None):
         self.logger = logger or AppLogger(APP_TITLE)
-        self.api_client_comp = ApiClient()
-
-    def post(self, uri, headers=None, json_body=None):
-        self.logger.api_start_log(uri, "POST", headers, json_body)
-        response = requests.post(uri, headers=headers, json=json_body)
-        self.logger.api_success_log(response)
-        return response
+        # self.api_client_comp = ApiClient()
 
     def post_msgs_with_config(self, config, messages=[]):
         """
@@ -37,9 +29,7 @@ class ApiClientCore:
             if user_key in config:
                 user_inputs[user_key] = config.get(user_key, "")
             else:
-                self.api_client_comp.show_warning_ui(
-                    f"Session state key '{user_key}' not found."
-                )
+                raise f"Session state key '{user_key}' not found."
 
         try:
             api_requestor = ApiRequestor()
@@ -50,12 +40,6 @@ class ApiClientCore:
                 num_inputs=num_inputs,
                 user_inputs=user_inputs,
                 messages=messages,
-            )
-            # if success, set parameters to session_state for save YAML
-            self.api_client_comp.show_success_ui(
-                "Successfully connected to API Server.",
-                uri=uri,
-                response=response,
             )
             self.logger.info_log(f"Request Success of {config_file}.")
             return response
