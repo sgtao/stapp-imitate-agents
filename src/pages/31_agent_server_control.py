@@ -153,7 +153,9 @@ def test_get_config_files(port):
         st.error(f"Failed to connect to API Server: {e}")
 
 
-def test_config_title(port, config_file="assets/001_get_simple_api_test.yaml"):
+def test_config_title(
+    port, config_file="assets/011_post_msg_gpt-oss-20b.yaml"
+):
     """
     APIサーバーへの接続をテストします。
     """
@@ -187,15 +189,15 @@ def test_config_title(port, config_file="assets/001_get_simple_api_test.yaml"):
 
 # モーダルの定義
 @st.dialog("Setting Info.")
-def modal_post_service(port, config_files):
-    st.write("Modal for POST service:")
+def modal_post_title(port, config_files):
+    st.write("Modal for POST Config-Title:")
     if len(config_files):
         st.info("Select Config file and Click `POST`.")
         config_file = render_config_selector(config_files)
         if st.button(label="POST", icon="🚀"):
             try:
                 # POST リクエストを送信
-                response = test_post_service(
+                response = test_config_title(
                     port=port, config_file=config_file
                 )
                 # if response:
@@ -230,58 +232,6 @@ def _modal_closer():
         st.info("モーダルを閉じます...")
         time.sleep(1)
         st.rerun()
-
-
-def test_post_service(port, config_file="assets/001_get_simple_api_test.yaml"):
-    """
-    APIサーバーへの接続をテストします。
-    """
-    uri = f"http://localhost:{port}/api/v0/service"
-    method = "POST"
-    header_dict = {"Content-Type": "application/json"}
-    # リクエストボディ入力（POST, PUTの場合のみ表示）
-    # request_body = """
-    #     {
-    #         "config_file": "assets/001_get_simple_api_test.yaml"
-    #     }
-    # """
-    request_body = {
-        "config_file": config_file,
-        "num_user_inputs": st.session_state.num_inputs,
-        "user_inputs": {},
-    }
-    for i in range(st.session_state.num_inputs):
-        user_key = f"user_input_{i}"
-        # value = st.session_state[f"user_input_{i}"].replace('"', "'")
-        # request_body["user_inputs"].append({{user_key: f"{value}"}})
-        if user_key in st.session_state:
-            value = st.session_state[user_key]
-            request_body["user_inputs"][user_key] = value
-        else:
-            st.warning(f"Session state key '{user_key}' not found.")
-    # body_json = json.loads(request_body)
-    # body_json = json.dumps(request_body)
-    body_json = request_body
-
-    try:
-        # response = requests.get(uri)
-        api_requestor = ApiRequestor()
-        response = api_requestor.send_request(
-            uri,
-            method,
-            header_dict,
-            body_json,
-        )
-        response.raise_for_status()  # HTTPエラーをチェック
-        st.success(
-            f"""
-            Successfully connected to API Server on port {port}.
-            """
-        )
-        return response
-    except requests.exceptions.RequestException as e:
-        # st.error(f"Failed to `POST` to API Server: {e}")
-        raise e
 
 
 def main():
@@ -329,9 +279,8 @@ def main():
                 if response is None:
                     response = test_get_config_files(port)
                 if response is None:
-                    if st.button("Test Service(post config)"):
-                        # response = test_post_service(port)
-                        modal_post_service(
+                    if st.button("Test Title(POST config-title)"):
+                        modal_post_title(
                             port=port,
                             config_files=st.session_state.config_files,
                         )
