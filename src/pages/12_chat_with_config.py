@@ -1,20 +1,16 @@
 # 12_chat_with_config.py
 # import time
-import json
-
 import streamlit as st
 
-from components.ApiClient import ApiClient
 from components.ChatMessage import ChatMessage
 from components.ChatModal import ChatModal
 from components.ClientController import ClientController
 from components.ConfigFiles import ConfigFiles
-from components.ResponseViewer import ResponseViewer
 from components.SideMenus import SideMenus
 
 # from functions.ApiRequestor import ApiRequestor
 from functions.AppLogger import AppLogger
-from functions.ResponseOperator import ResponseOperator
+from functions.ChatService import ChatService
 
 # APP_TITLE = "APIクライアントアプリ"
 APP_TITLE = "Chat with Config"
@@ -26,86 +22,6 @@ def initial_session_state():
         st.session_state.config_file_path = ""
 
 
-def post_messages_with_config(
-    uri="http://localhost:3000/api/v0/messages",
-    messages=[],
-):
-    # time.sleep(3)
-    # response_messaeg = {"role": "assistant", "content": "Hello again!"}
-    # if len(messages) > 0:
-    #     return messages[-1]
-    # else:
-    #     return response_messaeg
-    # APIリクエスト送信
-    api_client = ApiClient()
-    client_controller = ClientController()
-    response_viewer = ResponseViewer()
-    app_logger = AppLogger(APP_TITLE)
-    app_logger.info_log(f"Request with {messages[-1]}")
-    # clear action_results
-    # st.session_state.action_results = []
-    action_results = []
-
-    for index in range(len(st.session_state.action_configs)):
-        action_config = client_controller.get_action_config(index)
-        _action_type = action_config.get("type", "request")
-        _action_result = ""
-        if _action_type == "request":
-            action_config = client_controller.replace_action_config(
-                action_config=action_config, action_results=action_results
-            )
-
-            # print(f"index({index}): {action_config}")
-
-            response = api_client.post_msg_with_action_config(
-                action_config=action_config,
-                messages=messages,
-            )
-
-            # print(f"response: {response.json()}")
-
-            try:
-                _action_result = response_viewer.extract_response_value(
-                    response=response,
-                    path=action_config.get("user_property_path", "."),
-                )
-            except Exception:
-                _action_result = response.json()
-
-        elif _action_type == "extract":
-            _response_op = ResponseOperator()
-            action_config = client_controller.replace_extract_config(
-                action_config=action_config, action_results=action_results
-            )
-            _target_text = action_config.get("target", "")
-            _target_obj = json.loads(_target_text)
-            # print(
-            #     f"""
-            #     extract action:
-            #     - action_config: {action_config}
-            #     - target {_target_obj}
-            #     """
-            # )
-            try:
-                _action_result = _response_op.extract_property_from_json(
-                    json_data=_target_obj,
-                    property_path=action_config.get("user_property_path", "."),
-                )
-            except Exception:
-                _action_result = _target_text
-        else:
-            _action_result = "Nothing!"
-        # st.session_state.action_results.append(action_result)
-        action_results.append(_action_result)
-        app_logger.info_log(f"Action result_{index} : {_action_result}")
-
-        st.session_state.action_results = action_results
-
-    # print(f"api_response: {api_response}")
-    # return api_response
-    return action_results[-1]
-
-
 def main():
     st.page_link("main.py", label="Back to Home", icon="🏠")
 
@@ -114,6 +30,7 @@ def main():
     chat_message = ChatMessage()
     client_controller = ClientController()
     config_files = ConfigFiles()
+    chat_service = ChatService()
 
     # assets/privatesフォルダからyamlファイルを選択
     if not config_files:
@@ -147,8 +64,14 @@ def main():
             # アシスタントの応答
             with st.chat_message("assistant"):
                 with st.spinner("考え中..."):
-                    assistant_response = post_messages_with_config(
-                        messages=chat_message.get_messages(),
+                    # assistant_response = post_messages_with_config(
+                    #     messages=chat_message.get_messages(),
+                    # )
+                    assistant_response = (
+                        chat_service.post_messages_with_config(
+                            messages=chat_message.get_messages(),
+                            action_configs=st.session_state.action_configs,
+                        )
                     )
 
                     chat_message.add(
