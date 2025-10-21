@@ -14,7 +14,13 @@ st.page_link(
 )
 st.page_link(
     "pages/12_chat_with_config.py",
-    label="Go to Chat with Config App",
+    label="Go to Chat App with Config file",
     icon="💬",
 )
 st.page_link("pages/21_logs_viewer.py", label="Go to Log Vieewr", icon="🗒️")
+# Agent API Serverページへのリンク
+st.page_link(
+    "pages/31_agent_server_control.py",
+    label="Go to control page of agents api server",
+    icon="⚙️",
+)
