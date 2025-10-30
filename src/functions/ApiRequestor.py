@@ -90,14 +90,14 @@ class ApiRequestor:
         API呼び出しの高レベルラッパー関数
         :param uri: APIエンドポイント
         :param method: HTTPメソッド
-        :param config_file: 設定ファイルパス
+        :param config_file: 設定ファイルパス（オプション）
         :param num_inputs: ユーザー入力の数
         :param user_inputs: ユーザー入力 {user_input_0: "xxx", ...}
         :param messages: メッセージリスト [{"role": "user", "content": "..."}, ...]
         :return: レスポンスオブジェクト
         """
-        if not config_file:
-            raise ValueError("config_file must be specified")
+        # if not config_file:
+        #     raise ValueError("config_file must be specified")
 
         headers = {"Content-Type": "application/json"}
         body = {
