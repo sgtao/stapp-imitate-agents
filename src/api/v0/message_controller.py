@@ -67,11 +67,12 @@ async def process_message_request(request: Request):
     try:
         chat_service = ChatService()
         # send message:
-        response = chat_service.post_messages_with_configs(
+        results = chat_service.post_messages_with_configs(
             session_state=session_state,
             messages=messages,
             action_configs=action_configs,
         )
+        response = results[-1] if results else None
 
         # 結果の返却
         return JSONResponse(content={"results": response})

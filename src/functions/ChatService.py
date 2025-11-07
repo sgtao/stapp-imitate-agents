@@ -12,6 +12,14 @@ APP_TITLE = "ChatService"
 
 
 class ChatService:
+    """
+    ChatService クラスは、設定情報・セッション状態・メッセージ群をもとに
+    一連の API リクエストやレスポンス抽出を順次実行する統括サービスです。
+
+    各アクションの種類（"request" または "extract"）に応じて
+    適切な処理を行い、結果を蓄積・ログ出力・UI表示します。
+    """
+
     def __init__(self):
         self.app_logger = AppLogger(APP_TITLE)
         # instanciation using functions
@@ -26,6 +34,32 @@ class ChatService:
         session_state,
         action_configs,
     ):
+        """
+        複数のアクション設定を順に処理し、APIリクエストまたはデータ抽出を実行します。
+
+        各アクション設定 (`action_configs`) の "type" に応じて以下を行います:
+            - "request": 設定に基づいてAPIをPOSTし、レスポンスを解析。
+            - "extract": JSON文字列から指定パスの値を抽出。
+
+        Parameters
+        ----------
+        messages : list
+            送信するメッセージ群（リクエスト本文に相当）。
+        session_state : dict
+            セッション中の状態情報（動的置換に利用）。
+        action_configs : list[dict]
+            各アクションの設定情報。type, uri, config_fileなどを含む。
+
+        Returns
+        -------
+        Any
+            最終アクションの結果（成功・抽出結果・または None）。
+
+        Raises
+        ------
+        Exception
+            各アクションの実行中に発生した例外（ログ出力と警告UIを伴う）。
+        """
         results = []
         result = ""
 
@@ -92,4 +126,5 @@ class ChatService:
             results.append(result)
             self.app_logger.info_log(f"Action result_{index}: {result}")
 
-        return results[-1] if results else None
+        # return results[-1] if results else None
+        return results

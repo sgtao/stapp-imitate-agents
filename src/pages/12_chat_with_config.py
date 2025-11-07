@@ -67,14 +67,12 @@ def main():
                     # assistant_response = post_messages_with_config(
                     #     messages=chat_message.get_messages(),
                     # )
-                    assistant_response = (
-                        chat_service.post_messages_with_configs(
-                            session_state=st.session_state,
-                            messages=chat_message.get_messages(),
-                            action_configs=st.session_state.action_configs,
-                        )
+                    results = chat_service.post_messages_with_configs(
+                        session_state=st.session_state,
+                        messages=chat_message.get_messages(),
+                        action_configs=st.session_state.action_configs,
                     )
-
+                    assistant_response = results[-1] if results else None
                     chat_message.add(
                         role="assistant",
                         content=assistant_response,
@@ -84,8 +82,8 @@ def main():
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         if st.button(
-            label="Copy Response",
-            help="Copy last response",
+            label="",
+            help="Copy Response",
             icon="📋",
         ):
             ChatModal().modal(
