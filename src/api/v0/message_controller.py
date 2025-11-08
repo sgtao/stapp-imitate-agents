@@ -1,24 +1,14 @@
 # message_controller.py
 import json
-import os
 
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import JSONResponse
 
 from functions.AppLogger import AppLogger
 from functions.ChatService import ChatService
-from functions.utils.read_yaml_file import read_yaml_file
 
 APP_NAME = "api_server"
 router = APIRouter(tags=["Messages"])
-
-
-def get_apikey():
-    # API-KEYの確認
-    if os.getenv("API_KEY"):
-        return os.getenv("API_KEY")
-    else:
-        return ""
 
 
 async def process_message_request(request: Request):
@@ -31,26 +21,13 @@ async def process_message_request(request: Request):
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON format")
 
+    chat_service = ChatService()
+
     try:
-        config_file_path = body_data.get("config_file")
-        if not config_file_path:
-            raise HTTPException(
-                status_code=400, detail="Missing 'config_file'"
-            )
-        config_data = read_yaml_file(config_file_path)
-        config_data["api_key"] = get_apikey()
-        action_configs = config_data.get("action_state", [])
-
-        session_state = {}
-        num_user_inputs = body_data.get("num_user_inputs", 0)
-        user_inputs = body_data.get("user_inputs", {})
-        session_state["num_inputs"] = num_user_inputs
-        for i in range(num_user_inputs):
-            session_state[f"user_input_{i}"] = user_inputs.get(
-                f"user_input_{i}", ""
-            )
-
-        messages = body_data.get("messages")
+        post_data = chat_service.prepare_post_data(body_data)
+        session_state = post_data["session_state"]
+        messages = post_data["messages"]
+        action_configs = post_data["action_configs"]
 
     except Exception as e:
         api_logger.error_log(f"APIリクエスト作成失敗: {e}")
@@ -65,7 +42,6 @@ async def process_message_request(request: Request):
 
     # --- 2. ChatServiceを使ったリクエスト ---
     try:
-        chat_service = ChatService()
         # send message:
         results = chat_service.post_messages_with_configs(
             session_state=session_state,

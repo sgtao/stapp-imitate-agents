@@ -1,5 +1,8 @@
 # ChatService.py
 import json
+import os
+
+from fastapi import HTTPException
 
 from components.ApiClient import ApiClient
 
@@ -7,6 +10,7 @@ from functions.ApiClientCore import ApiClientCore
 from functions.AppLogger import AppLogger
 from functions.ClientConfigManager import ClientConfigManager
 from functions.ResponseOperator import ResponseOperator
+from functions.utils.read_yaml_file import read_yaml_file
 
 APP_TITLE = "ChatService"
 
@@ -27,6 +31,65 @@ class ChatService:
         self.client = ApiClientCore(self.app_logger)
         self.response_op = ResponseOperator()
         self.api_client_comp = ApiClient()
+
+    def get_apikey(self):
+        # API-KEYの確認
+        if os.getenv("API_KEY"):
+            return os.getenv("API_KEY")
+        else:
+            return ""
+
+    def prepare_post_data(self, body_data):
+        """
+        クライアントから渡されたリクエストボディ (`body_data`) を解析し、
+        API呼び出しに必要な構造化データを生成します。
+
+        Parameters
+        ----------
+        body_data : dict
+            クライアントリクエストの本文。以下のキーを含む想定:
+                - config_file : str  設定ファイルのパス
+                - num_user_inputs : int  入力数
+                - user_inputs : dict  入力データの辞書
+                - messages : list  APIへ送信するメッセージ群
+
+        Returns
+        -------
+        dict
+            API呼び出し処理用の辞書オブジェクト。
+            {
+                "action_configs": list,
+                "session_state": dict,
+                "messages": list
+            }
+
+        """
+        config_file_path = body_data.get("config_file")
+        if not config_file_path:
+            raise HTTPException(
+                status_code=400, detail="Missing 'config_file'"
+            )
+        config_data = read_yaml_file(config_file_path)
+        config_data["api_key"] = self.get_apikey()
+        action_configs = config_data.get("action_state", [])
+
+        session_state = {}
+        num_user_inputs = body_data.get("num_user_inputs", 0)
+        user_inputs = body_data.get("user_inputs", {})
+        session_state["num_inputs"] = num_user_inputs
+        for i in range(num_user_inputs):
+            session_state[f"user_input_{i}"] = user_inputs.get(
+                f"user_input_{i}", ""
+            )
+
+        messages = body_data.get("messages")
+
+        post_data = {
+            "action_configs": action_configs,
+            "session_state": session_state,
+            "messages": messages,
+        }
+        return post_data
 
     def post_messages_with_configs(
         self,
