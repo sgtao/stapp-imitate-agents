@@ -246,7 +246,7 @@ def main():
     # UI
     st.page_link("main.py", label="Back to Home", icon="🏠")
 
-    st.title(f"🤖 {APP_TITLE}")
+    st.title(f"🏃 {APP_TITLE}")
 
     # ポート番号の入力
     port = st.number_input(

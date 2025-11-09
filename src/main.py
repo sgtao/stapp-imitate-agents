@@ -22,5 +22,5 @@ st.page_link("pages/21_logs_viewer.py", label="Go to Log Vieewr", icon="🗒️"
 st.page_link(
     "pages/31_agent_server_control.py",
     label="Go to control page of agents api server",
-    icon="⚙️",
+    icon="🏃",
 )
