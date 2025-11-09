@@ -1,0 +1,15 @@
+# test_extract_messages.yaml
+title: test_extract_messages
+note: |
+  this config always reply messages[0] as test.
+action_state:
+- type: extract
+  target: messages
+  # user_property_path: messages[-5:]
+  user_property_path: messages[0:]
+- type: extract
+  target: messages
+  user_property_path: messages[-1].content
+- type: extract
+  target: messages
+  user_property_path: messages[0].content
