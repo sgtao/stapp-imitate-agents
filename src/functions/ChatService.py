@@ -95,6 +95,9 @@ class ChatService:
         }
         return post_data
 
+    def convert_messages_obj(self, messages):
+        return {"messages": messages}
+
     def post_messages_with_configs(
         self,
         messages,
@@ -169,9 +172,13 @@ class ChatService:
                     action_config=cfg,
                     results=results,
                 )
-                _target_text = action_config.get("target", "")
-                # print(f"_target_text: {_target_text}")
-                _target_obj = json.loads(_target_text)
+                if action_config.get("target", "") == "messages":
+                    target_obj = self.convert_messages_obj(messages)
+                else:
+                    _target_text = action_config.get("target", "")
+                    # print(f"_target_text: {_target_text}")
+                    target_obj = json.loads(_target_text)
+
                 # print(f"_target_obj: {_target_obj}")
                 user_property_path = action_config.get(
                     "user_property_path", "."
@@ -179,14 +186,14 @@ class ChatService:
                 # print(f"user_property_path: {user_property_path}")
                 try:
                     result = self.response_op.extract_property_from_json(
-                        json_data=_target_obj,
+                        json_data=target_obj,
                         property_path=user_property_path,
                     )
                     self.api_client_comp.show_success_ui(
                         f"Success to extract is {result}.",
                     )
                 except Exception:
-                    result = _target_text
+                    result = target_obj
                     self.api_client_comp.show_warning_ui(
                         f"Exception occured at extract, so set {result}",
                     )
