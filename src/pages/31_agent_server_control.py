@@ -50,11 +50,18 @@ def start_api_server(port):
 
         # APIサーバーを起動し、プロセスをセッション状態に保存
         # command = ["python", "api_server.py", "--port", str(port)]
-        command = ["python", SUBPROCESS_PROG, "--port", str(port)]
+        os.environ["LOCAL_USE_STREAMLIT"] = "0"
+        command = [
+            "python",
+            SUBPROCESS_PROG,
+            "--port",
+            str(port),
+        ]
         st.session_state.api_process = subprocess.Popen(
             command, start_new_session=True
         )
         st.session_state.port_number = port
+        os.environ["LOCAL_USE_STREAMLIT"] = "1"
         st.success(f"API Server started on port {port}")
     except Exception as e:
         st.error(f"API Server failed to start: {e}")

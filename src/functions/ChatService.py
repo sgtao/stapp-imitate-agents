@@ -2,9 +2,12 @@
 import json
 import os
 
-from fastapi import HTTPException
+from fastapi import Request, HTTPException
 
-from components.ApiClient import ApiClient
+if os.getenv("LOCAL_USE_STREAMLIT", "0") == "1":
+    from components.ApiClient import ApiClient
+else:
+    from functions.utils.ApiClientLog import ApiClientLog as ApiClient
 
 from functions.ApiClientCore import ApiClientCore
 from functions.AppLogger import AppLogger
@@ -31,6 +34,7 @@ class ChatService:
         self.client = ApiClientCore(self.app_logger)
         self.response_op = ResponseOperator()
         self.api_client_comp = ApiClient()
+        self.use_streamlit = True
 
     def get_apikey(self):
         # API-KEYの確認
@@ -157,7 +161,7 @@ class ChatService:
                 except Exception:
                     result = response.json()
                     self.api_client_comp.show_warning_ui(
-                        f"Exception occured at {config_file}"
+                        f"Exception occured at {config_file}",
                     )
             elif _type == "extract":
                 action_config = self.config_mgr.replace_extract_config(
@@ -166,13 +170,17 @@ class ChatService:
                     results=results,
                 )
                 _target_text = action_config.get("target", "")
+                # print(f"_target_text: {_target_text}")
                 _target_obj = json.loads(_target_text)
+                # print(f"_target_obj: {_target_obj}")
+                user_property_path = action_config.get(
+                    "user_property_path", "."
+                )
+                # print(f"user_property_path: {user_property_path}")
                 try:
                     result = self.response_op.extract_property_from_json(
                         json_data=_target_obj,
-                        property_path=action_config.get(
-                            "user_property_path", "."
-                        ),
+                        property_path=user_property_path,
                     )
                     self.api_client_comp.show_success_ui(
                         f"Success to extract is {result}.",
@@ -180,7 +188,7 @@ class ChatService:
                 except Exception:
                     result = _target_text
                     self.api_client_comp.show_warning_ui(
-                        f"Exception occured at extract, so set {result}"
+                        f"Exception occured at extract, so set {result}",
                     )
 
             else:
@@ -191,3 +199,42 @@ class ChatService:
 
         # return results[-1] if results else None
         return results
+
+    async def process_message_request(self, request: Request):
+        self.use_streamlit = False
+        # --- 1. リクエストと設定読み込み ---
+        try:
+            body_data = await request.json()
+            # api_logger.debug_log(f"request body: {body_data}")
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=400, detail="Invalid JSON format")
+
+        try:
+            post_data = self.prepare_post_data(body_data)
+            session_state = post_data["session_state"]
+            messages = post_data["messages"]
+            action_configs = post_data["action_configs"]
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=400, detail=f"APIリクエスト作成失敗: {e}"
+            )
+
+        if not messages:
+            raise HTTPException(
+                status_code=400, detail="messages not found in request body"
+            )
+
+        # --- 2. ChatServiceを使ったリクエスト ---
+        try:
+            # send message:
+            results = self.post_messages_with_configs(
+                session_state=session_state,
+                messages=messages,
+                action_configs=action_configs,
+            )
+            return results
+        except Exception as e:
+            raise HTTPException(
+                status_code=502, detail=f"APIリクエスト失敗: {e}"
+            )
